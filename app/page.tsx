@@ -116,7 +116,6 @@ export default function Home() {
     currentDate = addDays(currentDate, 1);
   }
 
-  // Group dates by month
   const months = allDates.reduce(
     (acc, date) => {
       const monthKey = format(date, "yyyy-MM");
@@ -146,18 +145,18 @@ export default function Home() {
                       className="flex flex-col items-center"
                       style={{ width: `${months[monthKey].length * 40}px` }}
                     >
-                      <h3 className="text-lg font-semibold">
+                      <h3 className="text-2xl font-bold p-2">
                         {format(parseISO(monthKey), "MMMM yyyy", {
                           locale: id,
                         })}
                       </h3>
                       <div className="flex">
-                        {weekdays.map((day) => (
+                        {months[monthKey].map((date, index) => (
                           <div
-                            key={`${monthKey}-${day}`}
-                            className="w-10 text-center font-medium"
+                            key={`${monthKey}-${index}`}
+                            className="w-10 dark:text-white/70"
                           >
-                            {day}
+                            {weekdays[date.getDay()]}
                           </div>
                         ))}
                       </div>
@@ -174,16 +173,19 @@ export default function Home() {
                       {dates.map((date, dateIndex) => (
                         <div
                           key={dateIndex}
-                          className="w-10 h-10 flex items-center justify-center"
+                          className="w-10 flex flex-col items-center"
                         >
-                          {format(date, "d")}
+                          <div className="flex items-center justify-center">
+                            {format(date, "d")}
+                          </div>
+                          <div className="h-full w-[1px] bg-muted-foreground/10"></div>
                         </div>
                       ))}
                     </div>
                   ))}
                 </div>
                 <div
-                  className="relative dark:text-white"
+                  className="relative dark:text-white mt-2"
                   style={{ height: `${events.length * 30}px` }}
                 >
                   {events.map((event, index) => {
