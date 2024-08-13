@@ -9,6 +9,8 @@ import {
   startOfMonth,
   endOfMonth,
   isWithinInterval,
+  isBefore,
+  isAfter,
 } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -171,6 +173,22 @@ export default function Home() {
   const currentTimePosition =
     differenceInDays(currentTime, displayStartDate) * 40;
 
+  const getEventStatus = (event: Event) => {
+    const start = parseIndonesianDate(event.start);
+    const end = parseIndonesianDate(event.end);
+    const now = currentTime;
+
+    if (isBefore(now, start)) {
+      const daysUntilStart = differenceInDays(start, now);
+      return `Mulai dalam ${daysUntilStart} hari`;
+    } else if (isAfter(now, end)) {
+      return "Selesai";
+    } else {
+      const daysUntilEnd = differenceInDays(end, now);
+      return `Berakhir dalam ${daysUntilEnd} hari`;
+    }
+  };
+
   return (
     <div className="flex flex-col w-full min-h-screen p-4">
       <div className="rounded-lg overflow-hidden">
@@ -189,11 +207,11 @@ export default function Home() {
                   {Object.keys(months).map((monthKey) => (
                     <div
                       key={monthKey}
-                      className="flex flex-col items-center sticky top-0  z-10"
+                      className="flex flex-col items-start sticky top-0 z-10"
                       style={{ width: `${months[monthKey].length * 40}px` }}
                     >
                       <h3 className="text-2xl font-bold p-2">
-                        {format(parseISO(monthKey), "MMMM yyyy", {
+                        {format(months[monthKey][0], "MMMM yyyy", {
                           locale: id,
                         })}
                       </h3>
@@ -239,18 +257,22 @@ export default function Home() {
                     const end = parseIndonesianDate(event.end);
                     const width = (differenceInDays(end, start) + 1) * 40;
                     const left = differenceInDays(start, displayStartDate) * 40;
+                    const status = getEventStatus(event);
 
                     return (
                       <div
                         key={index}
-                        className={`${colors[index % colors.length]} text-white p-1 absolute rounded-full h-8 overflow-hidden`}
+                        className={`${colors[index % colors.length]} text-white p-1 absolute rounded-full h-8 overflow-hidden flex items-center`}
                         style={{
                           width: `${width}px`,
                           left: `${left}px`,
                           top: `${index * 30}px`,
                         }}
                       >
-                        {event.kegiatan}
+                        <span className="truncate mr-2">{event.kegiatan}</span>
+                        <span className="text-xs bg-white/20 px-1 rounded whitespace-nowrap">
+                          {status}
+                        </span>
                       </div>
                     );
                   })}
