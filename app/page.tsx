@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
 import {
   parseISO,
@@ -8,6 +8,7 @@ import {
   format,
   startOfMonth,
   endOfMonth,
+  isWithinInterval,
 } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -24,14 +25,27 @@ interface ApiResponse {
 }
 
 const colors = [
-  "bg-red-500",
-  "bg-orange-500",
-  "bg-yellow-500",
-  "bg-green-500",
-  "bg-blue-500",
-  "bg-indigo-500",
-  "bg-purple-500",
-  "bg-pink-500",
+  "bg-slate-600",
+  "bg-zinc-600",
+  "bg-stone-600",
+  "bg-neutral-600",
+  "bg-red-700",
+  "bg-orange-700",
+  "bg-amber-700",
+  "bg-yellow-700",
+  "bg-lime-700",
+  "bg-green-700",
+  "bg-emerald-700",
+  "bg-teal-700",
+  "bg-cyan-700",
+  "bg-sky-700",
+  "bg-blue-700",
+  "bg-indigo-700",
+  "bg-violet-700",
+  "bg-purple-700",
+  "bg-fuchsia-700",
+  "bg-pink-700",
+  "bg-rose-700",
 ];
 
 const parseIndonesianDate = (dateString: string) => {
@@ -57,6 +71,8 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -76,6 +92,30 @@ export default function Home() {
 
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (timelineRef.current && !isLoading && events.length > 0) {
+      const currentDate = new Date();
+      const earliestStart = parseIndonesianDate(events[0].start);
+      const latestEnd = parseIndonesianDate(events[events.length - 1].end);
+
+      if (
+        isWithinInterval(currentDate, { start: earliestStart, end: latestEnd })
+      ) {
+        const daysFromStart = differenceInDays(currentDate, earliestStart);
+        const scrollPosition = daysFromStart * 40; // 40px per day
+        timelineRef.current.scrollLeft = scrollPosition;
+      }
+    }
+  }, [isLoading, events]);
 
   const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
@@ -128,6 +168,9 @@ export default function Home() {
     {} as { [key: string]: Date[] }
   );
 
+  const currentTimePosition =
+    differenceInDays(currentTime, displayStartDate) * 40;
+
   return (
     <div className="flex flex-col w-full min-h-screen p-4">
       <div className="rounded-lg overflow-hidden">
@@ -136,14 +179,17 @@ export default function Home() {
         </div>
         <Card>
           <CardBody>
-            <div className="overflow-x-auto">
+            <div
+              className="overflow-x-hidden hover:overflow-x-auto"
+              ref={timelineRef}
+            >
               <div className="flex flex-col min-w-max relative">
                 <div className="absolute top-28 left-[-20] right-0 bottom-0 pointer-events-none bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-opacity-50 bg-[length:40px_100%] bg-repeat-x"></div>
                 <div className="flex items-center dark:text-white p-2">
                   {Object.keys(months).map((monthKey) => (
                     <div
                       key={monthKey}
-                      className="flex flex-col items-center"
+                      className="flex flex-col items-center sticky top-0  z-10"
                       style={{ width: `${months[monthKey].length * 40}px` }}
                     >
                       <h3 className="text-2xl font-bold p-2">
@@ -197,18 +243,25 @@ export default function Home() {
                     return (
                       <div
                         key={index}
-                        className={`${colors[index % colors.length]} text-white p-1 absolute rounded text-xs overflow-hidden`}
+                        className={`${colors[index % colors.length]} text-white p-1 absolute rounded-full h-8 overflow-hidden`}
                         style={{
                           width: `${width}px`,
                           left: `${left}px`,
                           top: `${index * 30}px`,
-                          height: "25px",
                         }}
                       >
                         {event.kegiatan}
                       </div>
                     );
                   })}
+                  <div
+                    className="absolute top-[-40px] cursor-default bottom-0 w-[2px] bg-black dark:bg-white z-20 transition-opacity hover:opacity-10"
+                    style={{ left: `${currentTimePosition}px` }}
+                  >
+                    <div className="absolute top-[-20px] left-[-30px] bg-black dark:bg-white text-white dark:text-black px-2 py-1 rounded-full text-xs">
+                      {format(currentTime, "HH:mm:ss")}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
