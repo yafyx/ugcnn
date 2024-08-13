@@ -137,7 +137,8 @@ export default function Home() {
         <Card>
           <CardBody>
             <div className="overflow-x-auto">
-              <div className="flex flex-col min-w-max">
+              <div className="flex flex-col min-w-max relative">
+                <div className="absolute top-28 left-[-20] right-0 bottom-0 pointer-events-none bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-opacity-50 bg-[length:40px_100%] bg-repeat-x"></div>
                 <div className="flex items-center dark:text-white p-2">
                   {Object.keys(months).map((monthKey) => (
                     <div
@@ -154,7 +155,7 @@ export default function Home() {
                         {months[monthKey].map((date, index) => (
                           <div
                             key={`${monthKey}-${index}`}
-                            className="w-10 dark:text-white/70"
+                            className="w-10 text-sm dark:text-white/70 text-black/70"
                           >
                             {weekdays[date.getDay()]}
                           </div>
@@ -175,10 +176,9 @@ export default function Home() {
                           key={dateIndex}
                           className="w-10 flex flex-col items-center"
                         >
-                          <div className="flex items-center justify-center">
+                          <div className="flex items-center justify-center font-semibold">
                             {format(date, "d")}
                           </div>
-                          <div className="h-full w-[1px] bg-muted-foreground/10"></div>
                         </div>
                       ))}
                     </div>
