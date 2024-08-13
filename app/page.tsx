@@ -2,6 +2,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
 import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useDisclosure,
+} from "@nextui-org/react";
+import {
   parseISO,
   differenceInDays,
   addDays,
@@ -75,6 +84,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const timelineRef = useRef<HTMLDivElement>(null);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -118,6 +129,11 @@ export default function Home() {
       }
     }
   }, [isLoading, events]);
+
+  const handleEventClick = (event: Event) => {
+    setSelectedEvent(event);
+    onOpen();
+  };
 
   const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
@@ -262,12 +278,13 @@ export default function Home() {
                     return (
                       <div
                         key={index}
-                        className={`${colors[index % colors.length]} text-white p-1 absolute rounded-full h-8 overflow-hidden flex items-center`}
+                        className={`${colors[index % colors.length]} text-white p-1 absolute rounded-full h-8 overflow-hidden flex items-center cursor-pointer`}
                         style={{
                           width: `${width}px`,
                           left: `${left}px`,
                           top: `${index * 30}px`,
                         }}
+                        onClick={() => handleEventClick(event)}
                       >
                         <span className="truncate mr-2">{event.kegiatan}</span>
                         <span className="text-xs bg-white/20 px-1 rounded whitespace-nowrap">
@@ -290,6 +307,38 @@ export default function Home() {
           </CardBody>
         </Card>
       </div>
+
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                {selectedEvent?.kegiatan}
+              </ModalHeader>
+              <ModalBody>
+                <p>
+                  <strong>Tanggal:</strong> {selectedEvent?.tanggal}
+                </p>
+                <p>
+                  <strong>Mulai:</strong> {selectedEvent?.start}
+                </p>
+                <p>
+                  <strong>Selesai:</strong> {selectedEvent?.end}
+                </p>
+                <p>
+                  <strong>Status:</strong>{" "}
+                  {selectedEvent && getEventStatus(selectedEvent)}
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Tutup
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
