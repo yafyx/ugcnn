@@ -1,353 +1,218 @@
 "use client";
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useMemo,
-  useCallback,
-} from "react";
-import dayjs from "dayjs";
-import duration from "dayjs/plugin/duration";
-import timezone from "dayjs/plugin/timezone";
-import "dayjs/locale/id";
-
-dayjs.extend(duration);
-dayjs.extend(timezone);
-dayjs.locale("id");
-
-enum EventColor {
-  Blue = "bg-blue-500",
-  Green = "bg-green-500",
-  Yellow = "bg-yellow-500",
-  Red = "bg-red-500",
-  Purple = "bg-purple-500",
-  Pink = "bg-pink-500",
-  Indigo = "bg-indigo-500",
-}
+import React, { useState, useEffect } from "react";
+import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
+import {
+  parseISO,
+  differenceInDays,
+  addDays,
+  format,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
+import { id } from "date-fns/locale";
 
 interface Event {
   kegiatan: string;
   tanggal: string;
   start: string;
   end: string;
-  color?: EventColor;
 }
 
-const useEvents = () => {
+interface ApiResponse {
+  status: string;
+  data: Event[];
+}
+
+const colors = [
+  "bg-red-500",
+  "bg-orange-500",
+  "bg-yellow-500",
+  "bg-green-500",
+  "bg-blue-500",
+  "bg-indigo-500",
+  "bg-purple-500",
+  "bg-pink-500",
+];
+
+const parseIndonesianDate = (dateString: string) => {
+  const [day, month, year] = dateString.split(" ");
+  const monthMap: { [key: string]: string } = {
+    Januari: "01",
+    Februari: "02",
+    Maret: "03",
+    April: "04",
+    Mei: "05",
+    Juni: "06",
+    Juli: "07",
+    Agustus: "08",
+    September: "09",
+    Oktober: "10",
+    November: "11",
+    Desember: "12",
+  };
+  return parseISO(`${year}-${monthMap[month]}-${day.padStart(2, "0")}`);
+};
+
+export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch("https://baak-api.vercel.app/kalender");
-        if (!res.ok) throw new Error("Failed to fetch events");
-        const data = await res.json();
-        const coloredEvents = data.data.map((event: Event, index: number) => ({
-          ...event,
-          color:
-            Object.values(EventColor)[index % Object.values(EventColor).length],
-        }));
-        setEvents(coloredEvents);
+        const response = await fetch("https://baak-api.vercel.app/kalender");
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        const data: ApiResponse = await response.json();
+        setEvents(data.data);
+        setIsLoading(false);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error("An error occurred"));
-      } finally {
-        setLoading(false);
+        setError("An error occurred while fetching data");
+        setIsLoading(false);
       }
     };
 
     fetchEvents();
   }, []);
 
-  return { events, loading, error };
-};
+  const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
-const useTimelineScroll = (ref: React.RefObject<HTMLDivElement>) => {
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (ref.current && ref.current.contains(e.target as Node)) {
-        e.preventDefault();
-        ref.current.scrollLeft += e.deltaY;
-      }
-    };
-
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => window.removeEventListener("wheel", handleWheel);
-  }, [ref]);
-};
-
-const Timeline: React.FC = () => {
-  const { events, loading, error } = useEvents();
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const timelineRef = useRef<HTMLDivElement>(null);
-
-  useTimelineScroll(timelineRef);
-
-  const { firstDay, lastDay, totalDays, months } = useMemo(() => {
-    const firstDay =
-      events.length > 0
-        ? dayjs(events[0].start).startOf("day")
-        : dayjs().startOf("day");
-    const lastDay =
-      events.length > 0
-        ? dayjs(events[events.length - 1].end).endOf("day")
-        : dayjs().endOf("day");
-    const totalDays = lastDay.diff(firstDay, "day") + 1;
-    const months = Array.from(
-      { length: lastDay.diff(firstDay, "month") + 1 },
-      (_, i) => firstDay.add(i, "month").startOf("month")
-    );
-    return { firstDay, lastDay, totalDays, months };
-  }, [events]);
-
-  const currentTime = dayjs();
-  const dayWidth = 40;
-  const eventHeight = 36;
-  const eventMargin = 20;
-  const marginTop = 80;
-  const currentTimePosition = currentTime.diff(firstDay, "day") * dayWidth;
-
-  const openModal = useCallback((event: Event) => {
-    setSelectedEvent(event);
-    setIsOpen(true);
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
-  if (loading) {
-    return <LoadingSkeleton />;
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    return <ErrorMessage message={error.message} />;
+    return <div>Error: {error}</div>;
   }
 
-  return (
-    <div className="p-4 bg-gray-900 text-white">
-      <h1 className="text-2xl font-bold mb-4">Jadwal Kegiatan Kampus</h1>
-      <div className="relative overflow-x-auto" ref={timelineRef}>
-        <div
-          className="inline-block min-w-full"
-          style={{
-            width: `${totalDays * dayWidth}px`,
-            height: `${events.length * (eventHeight + eventMargin) + marginTop}px`,
-          }}
-        >
-          <MonthHeader months={months} dayWidth={dayWidth} />
-          <DayHeader
-            totalDays={totalDays}
-            firstDay={firstDay}
-            dayWidth={dayWidth}
-          />
-          <CurrentTimeIndicator position={currentTimePosition} />
-          <EventList
-            events={events}
-            firstDay={firstDay}
-            dayWidth={dayWidth}
-            eventHeight={eventHeight}
-            eventMargin={eventMargin}
-            marginTop={marginTop}
-            currentTime={currentTime}
-            openModal={openModal}
-          />
-        </div>
-      </div>
-      {isOpen && selectedEvent && (
-        <DetailModal event={selectedEvent} closeModal={closeModal} />
-      )}
-    </div>
+  if (events.length === 0) {
+    return <div>No events found</div>;
+  }
+
+  // Find the earliest start date and latest end date
+  const earliestStart = events.reduce((earliest, event) => {
+    const start = parseIndonesianDate(event.start);
+    return start < earliest ? start : earliest;
+  }, parseIndonesianDate(events[0].start));
+
+  const latestEnd = events.reduce((latest, event) => {
+    const end = parseIndonesianDate(event.end);
+    return end > latest ? end : latest;
+  }, parseIndonesianDate(events[0].end));
+
+  // Add 27 days to the latest end date
+  const displayEndDate = addDays(latestEnd, 27);
+
+  // Calculate the start of the month for the earliest start date
+  const displayStartDate = startOfMonth(earliestStart);
+
+  // Generate an array of all dates to display
+  const allDates = [];
+  let currentDate = displayStartDate;
+  while (currentDate <= displayEndDate) {
+    allDates.push(currentDate);
+    currentDate = addDays(currentDate, 1);
+  }
+
+  // Group dates by month
+  const months = allDates.reduce(
+    (acc, date) => {
+      const monthKey = format(date, "yyyy-MM");
+      if (!acc[monthKey]) {
+        acc[monthKey] = [];
+      }
+      acc[monthKey].push(date);
+      return acc;
+    },
+    {} as { [key: string]: Date[] }
   );
-};
-
-const MonthHeader: React.FC<{ months: dayjs.Dayjs[]; dayWidth: number }> = ({
-  months,
-  dayWidth,
-}) => (
-  <div className="flex mb-4 sticky top-0 z-10 bg-gray-900">
-    {months.map((month) => (
-      <div
-        key={month.format("YYYY-MM")}
-        className="flex-shrink-0 text-center font-bold text-yellow-500"
-        style={{
-          width: `${month.daysInMonth() * dayWidth}px`,
-        }}
-      >
-        {month.format("MMMM")}
-      </div>
-    ))}
-  </div>
-);
-
-const DayHeader: React.FC<{
-  totalDays: number;
-  firstDay: dayjs.Dayjs;
-  dayWidth: number;
-}> = ({ totalDays, firstDay, dayWidth }) => (
-  <div className="flex mb-2 sticky top-8 z-10 bg-gray-900">
-    {Array.from({ length: totalDays }, (_, i) => firstDay.add(i, "day")).map(
-      (day) => (
-        <div
-          key={day.format("YYYY-MM-DD")}
-          className="flex-shrink-0 text-center"
-          style={{ width: `${dayWidth}px` }}
-        >
-          <div className="text-xs mb-1">{day.format("ddd")}</div>
-          <div className="text-sm font-semibold">{day.format("D")}</div>
-        </div>
-      )
-    )}
-  </div>
-);
-
-const CurrentTimeIndicator: React.FC<{ position: number }> = ({ position }) => (
-  <div
-    className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
-    style={{ left: `${position}px` }}
-  ></div>
-);
-
-const EventList: React.FC<{
-  events: Event[];
-  firstDay: dayjs.Dayjs;
-  dayWidth: number;
-  eventHeight: number;
-  eventMargin: number;
-  marginTop: number;
-  currentTime: dayjs.Dayjs;
-  openModal: (event: Event) => void;
-}> = ({
-  events,
-  firstDay,
-  dayWidth,
-  eventHeight,
-  eventMargin,
-  marginTop,
-  currentTime,
-  openModal,
-}) => (
-  <div className="relative mt-4">
-    {events.map((event, index) => {
-      const start = dayjs(event.start || event.tanggal);
-      const end = dayjs(event.end || event.tanggal);
-      const left = start.diff(firstDay, "day") * dayWidth;
-      const width = Math.max((end.diff(start, "day") + 1) * dayWidth, dayWidth);
-      const top = index * (eventHeight + eventMargin) + marginTop;
-
-      return (
-        <EventItem
-          key={event.kegiatan}
-          event={event}
-          left={left}
-          width={width}
-          top={top}
-          height={eventHeight}
-          openDetail={() => openModal(event)}
-          now={currentTime}
-        />
-      );
-    })}
-  </div>
-);
-
-const EventItem: React.FC<{
-  event: Event;
-  left: number;
-  width: number;
-  top: number;
-  height: number;
-  openDetail: () => void;
-  now: dayjs.Dayjs;
-}> = ({ event, left, width, top, height, openDetail, now }) => {
-  const start = dayjs(event.start || event.tanggal);
-  const end = dayjs(event.end || event.tanggal);
-  const started = now.isAfter(start);
-  const ended = now.isAfter(end);
-  const diffStart = start.diff(now);
-  const diffEnd = end.diff(now);
 
   return (
-    <div
-      onClick={openDetail}
-      className={`absolute flex items-center z-10 text-white cursor-pointer ${event.color} rounded-xl`}
-      style={{
-        left: `${left}px`,
-        width: `${width}px`,
-        top: `${top}px`,
-        height: `${height}px`,
-      }}
-      role="button"
-      tabIndex={0}
-      aria-label={`Event: ${event.kegiatan}`}
-    >
-      <span className="event-name text-base md:text-lg text-black font-bold whitespace-nowrap overflow-hidden px-2">
-        {event.kegiatan}
-      </span>
-      {!started && (
-        <div className="absolute right-0 top-0 bg-white text-black text-xs rounded-bl-xl px-1">
-          {diffStart > 86400000
-            ? `${Math.trunc(dayjs.duration(diffStart).asDays())}d`
-            : dayjs.duration(diffStart).format("HH:mm:ss")}
+    <div className="flex flex-col w-full min-h-screen p-4">
+      <div className="rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between dark:text-white p-4">
+          <h2 className="text-2xl font-bold">Timeline Kalender Akademik</h2>
         </div>
-      )}
-      {started && !ended && (
-        <div className="absolute right-0 top-0 bg-white text-black text-xs rounded-bl-xl px-1">
-          {diffEnd > 86400000
-            ? `${Math.trunc(dayjs.duration(diffEnd).asDays())}d`
-            : dayjs.duration(diffEnd).format("HH:mm:ss")}
-        </div>
-      )}
-    </div>
-  );
-};
+        <Card>
+          <CardBody>
+            <div className="overflow-x-auto">
+              <div className="flex flex-col min-w-max">
+                <div className="flex items-center dark:text-white p-2">
+                  {Object.keys(months).map((monthKey) => (
+                    <div
+                      key={monthKey}
+                      className="flex flex-col items-center"
+                      style={{ width: `${months[monthKey].length * 40}px` }}
+                    >
+                      <h3 className="text-lg font-semibold">
+                        {format(parseISO(monthKey), "MMMM yyyy", {
+                          locale: id,
+                        })}
+                      </h3>
+                      <div className="flex">
+                        {weekdays.map((day) => (
+                          <div
+                            key={`${monthKey}-${day}`}
+                            className="w-10 text-center font-medium"
+                          >
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-start dark:text-white">
+                  {Object.values(months).map((dates, monthIndex) => (
+                    <div
+                      key={monthIndex}
+                      className="flex flex-wrap"
+                      style={{ width: `${dates.length * 40}px` }}
+                    >
+                      {dates.map((date, dateIndex) => (
+                        <div
+                          key={dateIndex}
+                          className="w-10 h-10 flex items-center justify-center"
+                        >
+                          {format(date, "d")}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <div
+                  className="relative dark:text-white"
+                  style={{ height: `${events.length * 30}px` }}
+                >
+                  {events.map((event, index) => {
+                    const start = parseIndonesianDate(event.start);
+                    const end = parseIndonesianDate(event.end);
+                    const width = (differenceInDays(end, start) + 1) * 40;
+                    const left = differenceInDays(start, displayStartDate) * 40;
 
-const DetailModal: React.FC<{ event: Event; closeModal: () => void }> = ({
-  event,
-  closeModal,
-}) => {
-  const start = dayjs(event.start || event.tanggal);
-  const end = dayjs(event.end || event.tanggal);
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div
-        className="bg-gray-800 p-6 rounded-lg max-w-md w-full"
-        role="dialog"
-        aria-modal="true"
-      >
-        <h2 className="text-xl font-bold mb-4">{event.kegiatan}</h2>
-        <p className="mb-2">Mulai: {start.format("dddd, D MMMM YYYY HH:mm")}</p>
-        {event.end && (
-          <p className="mb-4">
-            Selesai: {end.format("dddd, D MMMM YYYY HH:mm")}
-          </p>
-        )}
-        <button
-          onClick={closeModal}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-        >
-          Tutup
-        </button>
+                    return (
+                      <div
+                        key={index}
+                        className={`${colors[index % colors.length]} text-white p-1 absolute rounded text-xs overflow-hidden`}
+                        style={{
+                          width: `${width}px`,
+                          left: `${left}px`,
+                          top: `${index * 30}px`,
+                          height: "25px",
+                        }}
+                      >
+                        {event.kegiatan}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
       </div>
     </div>
   );
-};
-
-const LoadingSkeleton: React.FC = () => (
-  <div className="p-4 bg-gray-900 text-white">
-    <div className="h-8 bg-gray-700 rounded w-1/4 mb-4"></div>
-    <div className="h-64 bg-gray-700 rounded"></div>
-  </div>
-);
-
-const ErrorMessage: React.FC<{ message: string }> = ({ message }) => (
-  <div className="p-4 bg-gray-900 text-white">
-    <h2 className="text-xl font-bold mb-4">Error</h2>
-    <p>{message}</p>
-  </div>
-);
-
-export default Timeline;
+}
