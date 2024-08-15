@@ -211,10 +211,10 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
       <Card className="overflow-x-auto">
         <CardBody className="p-0">
           <div
-            className="overflow-x-hidden hover:overflow-x-auto"
+            className="overflow-x-hidden overflow-y-hidden hover:overflow-x-auto"
             ref={timelineRef}
           >
-            <div className="flex flex-col min-w-max relative h-auto py-2">
+            <div className="flex flex-col min-w-max relative h-auto py-4">
               <div className="absolute top-28 left-[-20] right-0 bottom-0 pointer-events-none bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-opacity-50 bg-[length:40px_100%] bg-repeat-x"></div>
               <div className="flex items-center dark:text-white p-2">
                 {Object.keys(months).map((monthKey) => (
@@ -286,9 +286,13 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                       <span className="sticky left-0 z-10 flex flex-col truncate px-2 text-sm font-medium text-white drop-shadow-lg sm:text-base">
                         {event.kegiatan}
                       </span>
-                      <span className="text-xs bg-white/20 px-1 rounded whitespace-nowrap">
+                      <Chip
+                        size="sm"
+                        variant="solid"
+                        className="dark:bg-white bg-black dark:text-black text-white"
+                      >
                         {status}
-                      </span>
+                      </Chip>
                     </div>
                   );
                 })}
