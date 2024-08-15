@@ -8,7 +8,6 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Button,
   useDisclosure,
 } from "@nextui-org/react";
 import {
@@ -17,7 +16,6 @@ import {
   addDays,
   format,
   startOfMonth,
-  endOfMonth,
   isWithinInterval,
   isBefore,
   isAfter,
@@ -111,7 +109,6 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
 
   const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
-  // Find the earliest start date and latest end date
   const earliestStart = events.reduce((earliest, event) => {
     const start = parseIndonesianDate(event.start);
     return start < earliest ? start : earliest;
@@ -122,13 +119,9 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
     return end > latest ? end : latest;
   }, parseIndonesianDate(events[0].end));
 
-  // Add 27 days to the latest end date
   const displayEndDate = addDays(latestEnd, 27);
-
-  // Calculate the start of the month for the earliest start date
   const displayStartDate = startOfMonth(earliestStart);
 
-  // Generate an array of all dates to display
   const allDates = [];
   let currentDate = displayStartDate;
   while (currentDate <= displayEndDate) {
@@ -167,18 +160,48 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
     }
   };
 
+  // New function to calculate event positions
+  const calculateEventPositions = (events: Event[]) => {
+    const lanes: { start: Date; end: Date }[] = [];
+    return events.map((event) => {
+      const start = parseIndonesianDate(event.start);
+      const end = parseIndonesianDate(event.end);
+      let laneIndex = lanes.findIndex(
+        (lane) =>
+          !isWithinInterval(start, { start: lane.start, end: lane.end }) &&
+          !isWithinInterval(end, { start: lane.start, end: lane.end })
+      );
+
+      if (laneIndex === -1) {
+        laneIndex = lanes.length;
+        lanes.push({ start, end });
+      } else {
+        lanes[laneIndex] = {
+          start: isBefore(start, lanes[laneIndex].start)
+            ? start
+            : lanes[laneIndex].start,
+          end: isAfter(end, lanes[laneIndex].end) ? end : lanes[laneIndex].end,
+        };
+      }
+
+      return { ...event, laneIndex };
+    });
+  };
+
+  const eventPositions = calculateEventPositions(events);
+
   return (
     <div className="rounded-lg overflow-hidden">
       <div className="flex items-center justify-between dark:text-white p-4">
         <h2 className="text-2xl font-bold">Timeline Kalender Akademik</h2>
       </div>
       <Card className="overflow-x-auto">
-        <CardBody>
+        <CardBody className="p-0">
           <div
             className="overflow-x-hidden hover:overflow-x-auto"
             ref={timelineRef}
           >
-            <div className="flex flex-col min-w-max relative">
+            <div className="flex flex-col min-w-max relative h-auto py-2">
               <div className="absolute top-28 left-[-20] right-0 bottom-0 pointer-events-none bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-opacity-50 bg-[length:40px_100%] bg-repeat-x"></div>
               <div className="flex items-center dark:text-white p-2">
                 {Object.keys(months).map((monthKey) => (
@@ -188,9 +211,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                     style={{ width: `${months[monthKey].length * 40}px` }}
                   >
                     <h3 className="text-2xl font-bold p-2">
-                      {format(months[monthKey][0], "MMMM yyyy", {
-                        locale: id,
-                      })}
+                      {format(months[monthKey][0], "MMMM yyyy", { locale: id })}
                     </h3>
                     <div className="flex">
                       {months[monthKey].map((date, index) => (
@@ -227,9 +248,11 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
               </div>
               <div
                 className="relative dark:text-white mt-2"
-                style={{ height: `${events.length * 30}px` }}
+                style={{
+                  height: `${(Math.max(...eventPositions.map((e) => e.laneIndex)) + 1) * 32}px`,
+                }}
               >
-                {events.map((event, index) => {
+                {eventPositions.map((event, index) => {
                   const start = parseIndonesianDate(event.start);
                   const end = parseIndonesianDate(event.end);
                   const width = (differenceInDays(end, start) + 1) * 40;
@@ -239,15 +262,17 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                   return (
                     <div
                       key={index}
-                      className={`${colors[index % colors.length]} text-white p-1 absolute rounded-full h-8 overflow-hidden flex items-center cursor-pointer`}
+                      className={`${colors[index % colors.length]} text-white p-2 absolute rounded-full h-8 overflow-hidden flex items-center cursor-pointer`}
                       style={{
                         width: `${width}px`,
                         left: `${left}px`,
-                        top: `${index * 30}px`,
+                        top: `${event.laneIndex * 36}px`,
                       }}
                       onClick={() => handleEventClick(event)}
                     >
-                      <span className="truncate mr-2">{event.kegiatan}</span>
+                      <span className="sticky left-0 z-10 flex flex-col truncate px-2 text-sm font-medium text-white drop-shadow-lg sm:text-base">
+                        {event.kegiatan}
+                      </span>
                       <span className="text-xs bg-white/20 px-1 rounded whitespace-nowrap">
                         {status}
                       </span>
