@@ -14,11 +14,13 @@ import {
   parseISO,
   differenceInDays,
   addDays,
+  subDays,
   format,
   startOfMonth,
   isWithinInterval,
   isBefore,
   isAfter,
+  isSameDay,
 } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -109,15 +111,27 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
 
   const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
-  const earliestStart = events.reduce((earliest, event) => {
+  const adjustedEvents = events.map((event) => {
+    const start = parseIndonesianDate(event.start);
+    const end = parseIndonesianDate(event.end);
+    if (isSameDay(start, end)) {
+      return {
+        ...event,
+        start: format(subDays(end, 7), "d MMMM yyyy", { locale: id }),
+      };
+    }
+    return event;
+  });
+
+  const earliestStart = adjustedEvents.reduce((earliest, event) => {
     const start = parseIndonesianDate(event.start);
     return start < earliest ? start : earliest;
-  }, parseIndonesianDate(events[0].start));
+  }, parseIndonesianDate(adjustedEvents[0].start));
 
-  const latestEnd = events.reduce((latest, event) => {
+  const latestEnd = adjustedEvents.reduce((latest, event) => {
     const end = parseIndonesianDate(event.end);
     return end > latest ? end : latest;
-  }, parseIndonesianDate(events[0].end));
+  }, parseIndonesianDate(adjustedEvents[0].end));
 
   const displayEndDate = addDays(latestEnd, 27);
   const displayStartDate = startOfMonth(earliestStart);
@@ -160,7 +174,6 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
     }
   };
 
-  // New function to calculate event positions
   const calculateEventPositions = (events: Event[]) => {
     const lanes: { start: Date; end: Date }[] = [];
     return events.map((event) => {
@@ -188,7 +201,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
     });
   };
 
-  const eventPositions = calculateEventPositions(events);
+  const eventPositions = calculateEventPositions(adjustedEvents);
 
   return (
     <div className="rounded-lg overflow-hidden">
