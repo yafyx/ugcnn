@@ -206,9 +206,9 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
 
   return (
     <div className="rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between dark:text-white p-4">
+      {/* <div className="flex items-center justify-between dark:text-white p-4">
         <h2 className="text-2xl font-bold">Timeline Kalender Akademik</h2>
-      </div>
+      </div> */}
       <Card className="overflow-hidden">
         <CardBody className="p-0">
           <ScrollShadow orientation="horizontal" size={20}>
@@ -322,7 +322,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                 </h2>
               </ModalHeader>
               <ModalBody>
-                <p className="text-foreground-600 text-center text-xs sm:text-start sm:text-sm">
+                <p className="text-foreground-600 text-xs sm:text-start sm:text-sm">
                   {selectedEvent?.tanggal}
                 </p>
                 <Link
