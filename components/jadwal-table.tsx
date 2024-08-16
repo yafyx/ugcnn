@@ -46,7 +46,9 @@ const JadwalTable: React.FC<JadwalTableProps> = ({ jadwal, kelas }) => {
               matkul && matkul.length > 0 ? (
                 matkul.map((m, index) => (
                   <TableRow key={`${hari}-${index}`}>
-                    <TableCell>{index === 0 ? hari : ""}</TableCell>
+                    <TableCell className="capitalize">
+                      {index === 0 ? hari : ""}
+                    </TableCell>
                     <TableCell>{m.nama}</TableCell>
                     <TableCell>{m.jam}</TableCell>
                     <TableCell>{m.ruang}</TableCell>
@@ -55,7 +57,7 @@ const JadwalTable: React.FC<JadwalTableProps> = ({ jadwal, kelas }) => {
                 ))
               ) : (
                 <TableRow key={hari}>
-                  <TableCell>{hari}</TableCell>
+                  <TableCell className="capitalize">{hari}</TableCell>
                   <TableCell>Tidak ada jadwal</TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>

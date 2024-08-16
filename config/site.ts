@@ -13,6 +13,6 @@ export const siteConfig = {
 
   ],
   links: {
-
+    github: "https://github.com/yafyx/ugcnn"
   },
 };

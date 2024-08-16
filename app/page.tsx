@@ -123,9 +123,14 @@ export default function Home() {
 
   return (
     <div className="flex flex-col w-full min-h-screen p-4">
+      <p className="py-8 pt-0 text-4xl sm:text-7xl font-bold relative z-20 bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 to-neutral-500">
+        cari jadwal dan daftar mahasiswa baru
+      </p>
       <form onSubmit={handleSubmit} className="mb-4">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 ">
           <Input
+            className="font-semibold"
+            labelPlacement="outside"
             type="text"
             label="Masukkan Kelas"
             placeholder="Contoh: 2ia14"
@@ -133,6 +138,7 @@ export default function Home() {
             onChange={handleKelasChange}
           />
           <CheckboxGroup
+            orientation="horizontal"
             label="Pilih opsi yang ingin ditampilkan"
             value={selectedOptions}
             onValueChange={setSelectedOptions}
