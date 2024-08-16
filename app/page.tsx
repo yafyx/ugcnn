@@ -50,6 +50,7 @@ export default function Home() {
   const [kelasBaru, setKelasBaru] = useState<KelasBaru[]>([]);
   const [kelas, setKelas] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isClassDataLoading, setIsClassDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showKelasData, setShowKelasData] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
@@ -110,9 +111,9 @@ export default function Home() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowKelasData(true);
-    setIsLoading(true);
+    setIsClassDataLoading(true);
     Promise.all([fetchJadwal(), fetchKelasBaru()]).then(() => {
-      setIsLoading(false);
+      setIsClassDataLoading(false);
     });
   };
 
@@ -147,7 +148,7 @@ export default function Home() {
 
       {showKelasData && (
         <div className="flex flex-col md:flex-row gap-4 mb-4">
-          {isLoading ? (
+          {isClassDataLoading ? (
             <Spinner color="default" />
           ) : (
             <>
