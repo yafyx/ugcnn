@@ -2,8 +2,16 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
-import { Button } from "@nextui-org/react";
+import { Button, Input } from "@nextui-org/react";
 import Timeline from "@/components/timeline";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface Event {
   kegiatan: string;
@@ -17,8 +25,30 @@ interface ApiResponse {
   data: Event[];
 }
 
+interface Jadwal {
+  nama: string;
+  waktu: string;
+  jam: string;
+  ruang: string;
+  dosen: string;
+}
+
+interface JadwalHari {
+  [key: string]: Jadwal[] | null;
+}
+
+interface KelasBaru {
+  npm: string;
+  nama: string;
+  kelas_lama: string;
+  kelas_baru: string;
+}
+
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [jadwal, setJadwal] = useState<JadwalHari | null>(null);
+  const [kelasBaru, setKelasBaru] = useState<KelasBaru[]>([]);
+  const [kelas, setKelas] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,13 +57,13 @@ export default function Home() {
       try {
         const response = await fetch("https://baak-api.vercel.app/kalender");
         if (!response.ok) {
-          throw new Error("Failed to fetch data");
+          throw new Error("Gagal mengambil data");
         }
         const data: ApiResponse = await response.json();
         setEvents(data.data);
         setIsLoading(false);
       } catch (err) {
-        setError("An error occurred while fetching data");
+        setError("Terjadi kesalahan saat mengambil data");
         setIsLoading(false);
       }
     };
@@ -41,143 +71,183 @@ export default function Home() {
     fetchEvents();
   }, []);
 
+  const fetchJadwal = async () => {
+    try {
+      const response = await fetch(
+        `https://baak-api.vercel.app/jadwal/${kelas}`
+      );
+      if (!response.ok) {
+        throw new Error("Gagal mengambil jadwal");
+      }
+      const data = await response.json();
+      setJadwal(data.data.jadwal);
+    } catch (err) {
+      setError("Terjadi kesalahan saat mengambil jadwal");
+    }
+  };
+
+  const fetchKelasBaru = async () => {
+    try {
+      const response = await fetch(
+        `https://baak-api.vercel.app/kelasbaru/${kelas}`
+      );
+      if (!response.ok) {
+        throw new Error("Gagal mengambil data kelas baru");
+      }
+      const data = await response.json();
+      setKelasBaru(data.data);
+    } catch (err) {
+      setError("Terjadi kesalahan saat mengambil data kelas baru");
+    }
+  };
+
+  const handleKelasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setKelas(e.target.value);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchJadwal();
+    fetchKelasBaru();
+  };
+
+  const jadwalChartData = jadwal
+    ? Object.entries(jadwal).map(([hari, matkul]) => ({
+        hari,
+        jumlahMatkul: matkul ? matkul.length : 0,
+      }))
+    : [];
+
+  const kelasBaruChartData = kelasBaru.reduce(
+    (acc, curr) => {
+      const existingKelas = acc.find((item) => item.kelas === curr.kelas_lama);
+      if (existingKelas) {
+        existingKelas.jumlah += 1;
+      } else {
+        acc.push({ kelas: curr.kelas_lama, jumlah: 1 });
+      }
+      return acc;
+    },
+    [] as { kelas: string; jumlah: number }[]
+  );
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Memuat...</div>;
   }
 
   if (error) {
     return <div>Error: {error}</div>;
   }
 
-  if (events.length === 0) {
-    return <div>No events found</div>;
-  }
-
   return (
     <div className="flex flex-col w-full min-h-screen p-4">
-      <div className="max-w-[900px] gap-2 grid grid-cols-12 grid-rows-2">
-        <Card className="col-span-12 sm:col-span-4 h-[300px]">
-          <CardHeader className="absolute z-10 top-1 flex-col !items-start">
-            <p className="text-tiny text-white/60 uppercase font-bold">
-              What to watch
-            </p>
-            <h4 className="text-white font-medium text-large">
-              Stream the Acme event
-            </h4>
-          </CardHeader>
-          <Image
-            width={400}
-            height={400}
-            alt="Card background"
-            className="z-0 w-full h-full object-cover"
-            src="https://nextui.org/images/card-example-4.jpeg"
+      <form onSubmit={handleSubmit} className="mb-4">
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            label="Masukkan Kelas"
+            placeholder="Contoh: 2ia14"
+            value={kelas}
+            onChange={handleKelasChange}
           />
+          <Button type="submit" color="primary">
+            Tampilkan Data
+          </Button>
+        </div>
+      </form>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Distribusi Jadwal</h2>
+          </CardHeader>
+          <CardBody>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={jadwalChartData}>
+                <XAxis dataKey="hari" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="jumlahMatkul" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardBody>
         </Card>
-        <Card className="col-span-12 sm:col-span-4 h-[300px]">
-          <CardHeader className="absolute z-10 top-1 flex-col !items-start">
-            <p className="text-tiny text-white/60 uppercase font-bold">
-              Plant a tree
-            </p>
-            <h4 className="text-white font-medium text-large">
-              Contribute to the planet
-            </h4>
+
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Distribusi Kelas Lama</h2>
           </CardHeader>
-          <Image
-            width={400}
-            height={400}
-            alt="Card background"
-            className="z-0 w-full h-full object-cover"
-            src="https://nextui.org/images/card-example-3.jpeg"
-          />
+          <CardBody>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={kelasBaruChartData}>
+                <XAxis dataKey="kelas" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="jumlah" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardBody>
         </Card>
-        <Card className="col-span-12 sm:col-span-4 h-[300px]">
-          <CardHeader className="absolute z-10 top-1 flex-col !items-start">
-            <p className="text-tiny text-white/60 uppercase font-bold">
-              Supercharged
+
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Ringkasan Kelas</h2>
+          </CardHeader>
+          <CardBody>
+            <p>Total Mahasiswa: {kelasBaru.length}</p>
+            <p>Kelas Baru: {kelas}</p>
+            <p>
+              Jumlah Mata Kuliah:{" "}
+              {jadwal ? Object.values(jadwal).flat().filter(Boolean).length : 0}
             </p>
-            <h4 className="text-white font-medium text-large">
-              Creates beauty like a beast
-            </h4>
-          </CardHeader>
-          <Image
-            width={400}
-            height={400}
-            alt="Card background"
-            className="z-0 w-full h-full object-cover"
-            src="https://nextui.org/images/card-example-2.jpeg"
-          />
-        </Card>
-        <Card
-          isFooterBlurred
-          className="w-full h-[300px] col-span-12 sm:col-span-5"
-        >
-          <CardHeader className="absolute z-10 top-1 flex-col items-start">
-            <p className="text-tiny text-white/60 uppercase font-bold">New</p>
-            <h4 className="text-black font-medium text-2xl">Acme camera</h4>
-          </CardHeader>
-          <Image
-            width={400}
-            height={400}
-            alt="Card example background"
-            className="z-0 w-full h-full scale-125 -translate-y-6 object-cover"
-            src="https://nextui.org/images/card-example-6.jpeg"
-          />
-          <CardFooter className="absolute bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between">
-            <div>
-              <p className="text-black text-tiny">Available soon.</p>
-              <p className="text-black text-tiny">Get notified.</p>
-            </div>
-            <Button
-              className="text-tiny"
-              color="primary"
-              radius="full"
-              size="sm"
-            >
-              Notify Me
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card
-          isFooterBlurred
-          className="w-full h-[300px] col-span-12 sm:col-span-7"
-        >
-          <CardHeader className="absolute z-10 top-1 flex-col items-start">
-            <p className="text-tiny text-white/60 uppercase font-bold">
-              Your day your way
-            </p>
-            <h4 className="text-white/90 font-medium text-xl">
-              Your checklist for better sleep
-            </h4>
-          </CardHeader>
-          <Image
-            width={400}
-            height={400}
-            alt="Relaxing app background"
-            className="z-0 w-full h-full object-cover"
-            src="https://nextui.org/images/card-example-5.jpeg"
-          />
-          <CardFooter className="absolute bg-black/40 bottom-0 z-10 border-t-1 border-default-600 dark:border-default-100">
-            <div className="flex flex-grow gap-2 items-center">
-              <Image
-                width={400}
-                height={400}
-                alt="Breathing app icon"
-                className="rounded-full w-10 h-11 bg-black"
-                src="https://nextui.org/images/breathing-app-icon.jpeg"
-              />
-              <div className="flex flex-col">
-                <p className="text-tiny text-white/60">Breathing App</p>
-                <p className="text-tiny text-white/60">
-                  Get a good night's sleep.
-                </p>
-              </div>
-            </div>
-            <Button radius="full" size="sm">
-              Get App
-            </Button>
-          </CardFooter>
+          </CardBody>
         </Card>
       </div>
+
+      {jadwal && (
+        <Card className="mb-4">
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Jadwal Kelas {kelas}</h2>
+          </CardHeader>
+          <CardBody>
+            {Object.entries(jadwal).map(([hari, matkul]) => (
+              <div key={hari} className="mb-2">
+                <h3 className="font-semibold">
+                  {hari.charAt(0).toUpperCase() + hari.slice(1)}
+                </h3>
+                {matkul ? (
+                  <ul>
+                    {matkul.map((m, index) => (
+                      <li key={index}>
+                        {m.nama} - {m.jam} - {m.ruang} - {m.dosen}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Tidak ada jadwal</p>
+                )}
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+      )}
+
+      <Card className="mb-4">
+        <CardHeader>
+          <h2 className="text-lg font-semibold">Daftar Mahasiswa Kelas Baru</h2>
+        </CardHeader>
+        <CardBody>
+          <ul>
+            {kelasBaru.map((mahasiswa, index) => (
+              <li key={index}>
+                {mahasiswa.nama} (NPM: {mahasiswa.npm}) - Kelas Lama:{" "}
+                {mahasiswa.kelas_lama}
+              </li>
+            ))}
+          </ul>
+        </CardBody>
+      </Card>
+
       <Timeline events={events} />
     </div>
   );
