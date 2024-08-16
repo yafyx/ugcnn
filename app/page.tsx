@@ -1,30 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
-import { Button, Input } from "@nextui-org/react";
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@nextui-org/table";
-import { Skeleton } from "@nextui-org/skeleton";
+  Button,
+  Input,
+  Spinner,
+  CheckboxGroup,
+  Checkbox,
+} from "@nextui-org/react";
 import Timeline from "@/components/timeline";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+import { Skeleton } from "@nextui-org/skeleton";
+import JadwalTable from "@/components/jadwal-table";
+import MahasiswaTable from "@/components/mahasiswa-table";
 
 interface Event {
   kegiatan: string;
@@ -65,6 +52,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showKelasData, setShowKelasData] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -122,41 +110,11 @@ export default function Home() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowKelasData(true);
-    fetchJadwal();
-    fetchKelasBaru();
+    setIsLoading(true);
+    Promise.all([fetchJadwal(), fetchKelasBaru()]).then(() => {
+      setIsLoading(false);
+    });
   };
-
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
-
-  const jadwalChartData = jadwal
-    ? Object.entries(jadwal).map(([hari, matkul]) => ({
-        hari,
-        jumlahMatkul: matkul ? matkul.length : 0,
-      }))
-    : [];
-
-  const kelasBaruChartData = kelasBaru.reduce(
-    (acc, curr) => {
-      const existingKelas = acc.find((item) => item.kelas === curr.kelas_lama);
-      if (existingKelas) {
-        existingKelas.jumlah += 1;
-      } else {
-        acc.push({ kelas: curr.kelas_lama, jumlah: 1 });
-      }
-      return acc;
-    },
-    [] as { kelas: string; jumlah: number }[]
-  );
-
-  const totalMahasiswa = kelasBaru.length;
-  const totalMataKuliah = jadwal
-    ? Object.values(jadwal).flat().filter(Boolean).length
-    : 0;
-
-  const pieChartData = [
-    { name: "Mahasiswa", value: totalMahasiswa },
-    { name: "Mata Kuliah", value: totalMataKuliah },
-  ];
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -165,7 +123,7 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full min-h-screen p-4">
       <form onSubmit={handleSubmit} className="mb-4">
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-4">
           <Input
             type="text"
             label="Masukkan Kelas"
@@ -173,214 +131,40 @@ export default function Home() {
             value={kelas}
             onChange={handleKelasChange}
           />
+          <CheckboxGroup
+            label="Pilih opsi yang ingin ditampilkan"
+            value={selectedOptions}
+            onValueChange={setSelectedOptions}
+          >
+            <Checkbox value="jadwal">Jadwal Kelas</Checkbox>
+            <Checkbox value="mahasiswa">Daftar Mahasiswa</Checkbox>
+          </CheckboxGroup>
           <Button type="submit" color="primary">
             Tampilkan Data
           </Button>
         </div>
       </form>
 
-      {showKelasData ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <Card className="w-full h-36">
-              <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-                <p className="text-tiny uppercase font-bold">Total Mahasiswa</p>
-                <h4 className="font-bold text-large">{totalMahasiswa}</h4>
-              </CardHeader>
-              <CardBody className="py-2">
-                <small className="text-default-500">
-                  +{totalMahasiswa} dari kelas baru
-                </small>
-              </CardBody>
-            </Card>
+      {showKelasData && (
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          {isLoading ? (
+            <Spinner color="default" />
+          ) : (
+            <>
+              {selectedOptions.includes("jadwal") && jadwal && (
+                <div className="w-full md:w-1/2">
+                  <JadwalTable jadwal={jadwal} kelas={kelas} />
+                </div>
+              )}
 
-            <Card className="w-full h-36">
-              <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-                <p className="text-tiny uppercase font-bold">
-                  Total Mata Kuliah
-                </p>
-                <h4 className="font-bold text-large">{totalMataKuliah}</h4>
-              </CardHeader>
-              <CardBody className="py-2">
-                <small className="text-default-500">Dari semua hari</small>
-              </CardBody>
-            </Card>
-
-            <Card className="w-full h-36">
-              <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-                <p className="text-tiny uppercase font-bold">Kelas Baru</p>
-                <h4 className="font-bold text-large">{kelas}</h4>
-              </CardHeader>
-              <CardBody className="py-2">
-                <small className="text-default-500">Kelas yang dipilih</small>
-              </CardBody>
-            </Card>
-
-            <Card className="w-full h-36">
-              <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-                <p className="text-tiny uppercase font-bold">
-                  Rata-rata Mata Kuliah per Hari
-                </p>
-                <h4 className="font-bold text-large">
-                  {jadwal
-                    ? (totalMataKuliah / Object.keys(jadwal).length).toFixed(2)
-                    : 0}
-                </h4>
-              </CardHeader>
-              <CardBody className="py-2">
-                <small className="text-default-500">
-                  Berdasarkan jadwal saat ini
-                </small>
-              </CardBody>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            <Card>
-              <CardHeader>
-                <h2 className="text-lg font-semibold">Distribusi Jadwal</h2>
-              </CardHeader>
-              <CardBody>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={jadwalChartData}>
-                    <XAxis dataKey="hari" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="jumlahMatkul" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardBody>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <h2 className="text-lg font-semibold">Distribusi Kelas Lama</h2>
-              </CardHeader>
-              <CardBody>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={kelasBaruChartData}>
-                    <XAxis dataKey="kelas" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="jumlah" stroke="#82ca9d" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardBody>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <h2 className="text-lg font-semibold">
-                  Perbandingan Mahasiswa dan Mata Kuliah
-                </h2>
-              </CardHeader>
-              <CardBody>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={pieChartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {pieChartData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardBody>
-            </Card>
-          </div>
-
-          {jadwal && (
-            <Card className="mb-4">
-              <CardHeader>
-                <h2 className="text-lg font-semibold">Jadwal Kelas {kelas}</h2>
-              </CardHeader>
-              <CardBody>
-                <Table aria-label="Jadwal Kelas">
-                  <TableHeader>
-                    <TableColumn>Hari</TableColumn>
-                    <TableColumn>Mata Kuliah</TableColumn>
-                    <TableColumn>Jam</TableColumn>
-                    <TableColumn>Ruang</TableColumn>
-                    <TableColumn>Dosen</TableColumn>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(jadwal).flatMap(([hari, matkul]) =>
-                      matkul && matkul.length > 0 ? (
-                        matkul.map((m, index) => (
-                          <TableRow key={`${hari}-${index}`}>
-                            <TableCell>{index === 0 ? hari : ""}</TableCell>
-                            <TableCell>{m.nama}</TableCell>
-                            <TableCell>{m.jam}</TableCell>
-                            <TableCell>{m.ruang}</TableCell>
-                            <TableCell>{m.dosen}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow key={hari}>
-                          <TableCell>{hari}</TableCell>
-                          <TableCell>Tidak ada jadwal</TableCell>
-                          <TableCell>-</TableCell>
-                          <TableCell>-</TableCell>
-                          <TableCell>-</TableCell>
-                        </TableRow>
-                      )
-                    )}
-                  </TableBody>
-                </Table>
-              </CardBody>
-            </Card>
+              {selectedOptions.includes("mahasiswa") && (
+                <div className="w-full md:w-1/2">
+                  <MahasiswaTable kelasBaru={kelasBaru} />
+                </div>
+              )}
+            </>
           )}
-
-          <Card className="mb-4">
-            <CardHeader>
-              <h2 className="text-lg font-semibold">
-                Daftar Mahasiswa Kelas Baru
-              </h2>
-            </CardHeader>
-            <CardBody>
-              <Table aria-label="Daftar Mahasiswa Kelas Baru">
-                <TableHeader>
-                  <TableColumn>Nama</TableColumn>
-                  <TableColumn>NPM</TableColumn>
-                  <TableColumn>Kelas Lama</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {kelasBaru.map((mahasiswa, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{mahasiswa.nama}</TableCell>
-                      <TableCell>{mahasiswa.npm}</TableCell>
-                      <TableCell>{mahasiswa.kelas_lama}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardBody>
-          </Card>
-        </>
-      ) : (
-        <Card className="mb-4">
-          <CardHeader>
-            <Skeleton className="w-3/5 rounded-lg">
-              <div className="h-8 w-3/5 rounded-lg bg-default-200"></div>
-            </Skeleton>
-          </CardHeader>
-          <CardBody>
-            <Skeleton className="rounded-lg">
-              <div className="h-40 rounded-lg bg-default-300"></div>
-            </Skeleton>
-          </CardBody>
-        </Card>
+        </div>
       )}
 
       <div className="flex items-center justify-between dark:text-white p-4">
