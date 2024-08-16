@@ -1,8 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
+import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { Button, Input } from "@nextui-org/react";
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@nextui-org/table";
 import Timeline from "@/components/timeline";
 import {
   BarChart,
@@ -11,6 +18,11 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 
 interface Event {
@@ -111,6 +123,8 @@ export default function Home() {
     fetchKelasBaru();
   };
 
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+
   const jadwalChartData = jadwal
     ? Object.entries(jadwal).map(([hari, matkul]) => ({
         hari,
@@ -130,6 +144,16 @@ export default function Home() {
     },
     [] as { kelas: string; jumlah: number }[]
   );
+
+  const totalMahasiswa = kelasBaru.length;
+  const totalMataKuliah = jadwal
+    ? Object.values(jadwal).flat().filter(Boolean).length
+    : 0;
+
+  const pieChartData = [
+    { name: "Mahasiswa", value: totalMahasiswa },
+    { name: "Mata Kuliah", value: totalMataKuliah },
+  ];
 
   if (isLoading) {
     return <div>Memuat...</div>;
@@ -156,6 +180,58 @@ export default function Home() {
         </div>
       </form>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <Card className="w-full h-36">
+          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
+            <p className="text-tiny uppercase font-bold">Total Mahasiswa</p>
+            <h4 className="font-bold text-large">{totalMahasiswa}</h4>
+          </CardHeader>
+          <CardBody className="py-2">
+            <small className="text-default-500">
+              +{totalMahasiswa} dari kelas baru
+            </small>
+          </CardBody>
+        </Card>
+
+        <Card className="w-full h-36">
+          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
+            <p className="text-tiny uppercase font-bold">Total Mata Kuliah</p>
+            <h4 className="font-bold text-large">{totalMataKuliah}</h4>
+          </CardHeader>
+          <CardBody className="py-2">
+            <small className="text-default-500">Dari semua hari</small>
+          </CardBody>
+        </Card>
+
+        <Card className="w-full h-36">
+          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
+            <p className="text-tiny uppercase font-bold">Kelas Baru</p>
+            <h4 className="font-bold text-large">{kelas}</h4>
+          </CardHeader>
+          <CardBody className="py-2">
+            <small className="text-default-500">Kelas yang dipilih</small>
+          </CardBody>
+        </Card>
+
+        <Card className="w-full h-36">
+          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
+            <p className="text-tiny uppercase font-bold">
+              Rata-rata Mata Kuliah per Hari
+            </p>
+            <h4 className="font-bold text-large">
+              {jadwal
+                ? (totalMataKuliah / Object.keys(jadwal).length).toFixed(2)
+                : 0}
+            </h4>
+          </CardHeader>
+          <CardBody className="py-2">
+            <small className="text-default-500">
+              Berdasarkan jadwal saat ini
+            </small>
+          </CardBody>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         <Card>
           <CardHeader>
@@ -179,27 +255,44 @@ export default function Home() {
           </CardHeader>
           <CardBody>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={kelasBaruChartData}>
+              <LineChart data={kelasBaruChartData}>
                 <XAxis dataKey="kelas" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="jumlah" fill="#82ca9d" />
-              </BarChart>
+                <Line type="monotone" dataKey="jumlah" stroke="#82ca9d" />
+              </LineChart>
             </ResponsiveContainer>
           </CardBody>
         </Card>
 
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold">Ringkasan Kelas</h2>
+            <h2 className="text-lg font-semibold">
+              Perbandingan Mahasiswa dan Mata Kuliah
+            </h2>
           </CardHeader>
           <CardBody>
-            <p>Total Mahasiswa: {kelasBaru.length}</p>
-            <p>Kelas Baru: {kelas}</p>
-            <p>
-              Jumlah Mata Kuliah:{" "}
-              {jadwal ? Object.values(jadwal).flat().filter(Boolean).length : 0}
-            </p>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={pieChartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {pieChartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </CardBody>
         </Card>
       </div>
@@ -210,24 +303,38 @@ export default function Home() {
             <h2 className="text-lg font-semibold">Jadwal Kelas {kelas}</h2>
           </CardHeader>
           <CardBody>
-            {Object.entries(jadwal).map(([hari, matkul]) => (
-              <div key={hari} className="mb-2">
-                <h3 className="font-semibold">
-                  {hari.charAt(0).toUpperCase() + hari.slice(1)}
-                </h3>
-                {matkul ? (
-                  <ul>
-                    {matkul.map((m, index) => (
-                      <li key={index}>
-                        {m.nama} - {m.jam} - {m.ruang} - {m.dosen}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>Tidak ada jadwal</p>
+            <Table aria-label="Jadwal Kelas">
+              <TableHeader>
+                <TableColumn>Hari</TableColumn>
+                <TableColumn>Mata Kuliah</TableColumn>
+                <TableColumn>Jam</TableColumn>
+                <TableColumn>Ruang</TableColumn>
+                <TableColumn>Dosen</TableColumn>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(jadwal).flatMap(([hari, matkul]) =>
+                  matkul && matkul.length > 0 ? (
+                    matkul.map((m, index) => (
+                      <TableRow key={`${hari}-${index}`}>
+                        <TableCell>{index === 0 ? hari : ""}</TableCell>
+                        <TableCell>{m.nama}</TableCell>
+                        <TableCell>{m.jam}</TableCell>
+                        <TableCell>{m.ruang}</TableCell>
+                        <TableCell>{m.dosen}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow key={hari}>
+                      <TableCell>{hari}</TableCell>
+                      <TableCell>Tidak ada jadwal</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                    </TableRow>
+                  )
                 )}
-              </div>
-            ))}
+              </TableBody>
+            </Table>
           </CardBody>
         </Card>
       )}
@@ -237,14 +344,22 @@ export default function Home() {
           <h2 className="text-lg font-semibold">Daftar Mahasiswa Kelas Baru</h2>
         </CardHeader>
         <CardBody>
-          <ul>
-            {kelasBaru.map((mahasiswa, index) => (
-              <li key={index}>
-                {mahasiswa.nama} (NPM: {mahasiswa.npm}) - Kelas Lama:{" "}
-                {mahasiswa.kelas_lama}
-              </li>
-            ))}
-          </ul>
+          <Table aria-label="Daftar Mahasiswa Kelas Baru">
+            <TableHeader>
+              <TableColumn>Nama</TableColumn>
+              <TableColumn>NPM</TableColumn>
+              <TableColumn>Kelas Lama</TableColumn>
+            </TableHeader>
+            <TableBody>
+              {kelasBaru.map((mahasiswa, index) => (
+                <TableRow key={index}>
+                  <TableCell>{mahasiswa.nama}</TableCell>
+                  <TableCell>{mahasiswa.npm}</TableCell>
+                  <TableCell>{mahasiswa.kelas_lama}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardBody>
       </Card>
 
