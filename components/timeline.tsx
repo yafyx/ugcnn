@@ -9,6 +9,7 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
+  ScrollShadow,
 } from "@nextui-org/react";
 import {
   parseISO,
@@ -208,105 +209,106 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
       <div className="flex items-center justify-between dark:text-white p-4">
         <h2 className="text-2xl font-bold">Timeline Kalender Akademik</h2>
       </div>
-      <Card className="overflow-x-auto">
+      <Card className="overflow-hidden">
         <CardBody className="p-0">
-          <div
-            className="overflow-x-hidden overflow-y-hidden hover:overflow-x-auto"
-            ref={timelineRef}
-          >
-            <div className="flex flex-col min-w-max relative h-auto py-4">
-              <div className="absolute top-28 left-[-20] right-0 bottom-0 pointer-events-none bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-opacity-50 bg-[length:40px_100%] bg-repeat-x"></div>
-              <div className="flex items-center dark:text-white p-2">
-                {Object.keys(months).map((monthKey) => (
-                  <div
-                    key={monthKey}
-                    className="flex flex-col items-start sticky top-0 z-10"
-                    style={{ width: `${months[monthKey].length * 40}px` }}
-                  >
-                    <h3 className="text-2xl font-bold p-2">
-                      {format(months[monthKey][0], "MMMM yyyy", { locale: id })}
-                    </h3>
-                    <div className="flex">
-                      {months[monthKey].map((date, index) => (
+          <ScrollShadow orientation="horizontal" size={20}>
+            <div className="overflow-x-auto" ref={timelineRef}>
+              <div className="flex flex-col min-w-max relative h-auto py-4">
+                <div className="absolute top-28 left-[-20] right-0 bottom-0 pointer-events-none bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-opacity-50 bg-[length:40px_100%] bg-repeat-x"></div>
+                <div className="flex items-center dark:text-white p-2">
+                  {Object.keys(months).map((monthKey) => (
+                    <div
+                      key={monthKey}
+                      className="flex flex-col items-start sticky top-0 z-10"
+                      style={{ width: `${months[monthKey].length * 40}px` }}
+                    >
+                      <h3 className="text-2xl font-bold p-2">
+                        {format(months[monthKey][0], "MMMM yyyy", {
+                          locale: id,
+                        })}
+                      </h3>
+                      <div className="flex">
+                        {months[monthKey].map((date, index) => (
+                          <div
+                            key={`${monthKey}-${index}`}
+                            className="w-10 text-sm dark:text-white/70 text-black/70"
+                          >
+                            {weekdays[date.getDay()]}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-start dark:text-white">
+                  {Object.values(months).map((dates, monthIndex) => (
+                    <div
+                      key={monthIndex}
+                      className="flex flex-wrap"
+                      style={{ width: `${dates.length * 40}px` }}
+                    >
+                      {dates.map((date, dateIndex) => (
                         <div
-                          key={`${monthKey}-${index}`}
-                          className="w-10 text-sm dark:text-white/70 text-black/70"
+                          key={dateIndex}
+                          className="w-10 flex flex-col items-center"
                         >
-                          {weekdays[date.getDay()]}
+                          <div className="flex items-center justify-center font-semibold">
+                            {format(date, "d")}
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-start dark:text-white">
-                {Object.values(months).map((dates, monthIndex) => (
-                  <div
-                    key={monthIndex}
-                    className="flex flex-wrap"
-                    style={{ width: `${dates.length * 40}px` }}
-                  >
-                    {dates.map((date, dateIndex) => (
-                      <div
-                        key={dateIndex}
-                        className="w-10 flex flex-col items-center"
-                      >
-                        <div className="flex items-center justify-center font-semibold">
-                          {format(date, "d")}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-              <div
-                className="relative dark:text-white mt-2"
-                style={{
-                  height: `${(Math.max(...eventPositions.map((e) => e.laneIndex)) + 1) * 32}px`,
-                }}
-              >
-                {eventPositions.map((event, index) => {
-                  const start = parseIndonesianDate(event.start);
-                  const end = parseIndonesianDate(event.end);
-                  const width = (differenceInDays(end, start) + 1) * 40;
-                  const left = differenceInDays(start, displayStartDate) * 40;
-                  const status = getEventStatus(event);
-
-                  return (
-                    <div
-                      key={index}
-                      className={`${colors[index % colors.length]} text-white p-2 absolute rounded-full h-8 overflow-hidden flex items-center cursor-pointer`}
-                      style={{
-                        width: `${width}px`,
-                        left: `${left}px`,
-                        top: `${event.laneIndex * 36}px`,
-                      }}
-                      onClick={() => handleEventClick(event)}
-                    >
-                      <span className="sticky left-0 z-10 flex flex-col truncate px-2 text-sm font-medium text-white drop-shadow-lg sm:text-base">
-                        {event.kegiatan}
-                      </span>
-                      <Chip
-                        size="sm"
-                        variant="solid"
-                        className="dark:bg-white bg-black dark:text-black text-white"
-                      >
-                        {status}
-                      </Chip>
-                    </div>
-                  );
-                })}
+                  ))}
+                </div>
                 <div
-                  className="absolute top-[-40px] cursor-default bottom-0 w-[2px] bg-black dark:bg-white z-20 transition-opacity hover:opacity-10"
-                  style={{ left: `${currentTimePosition}px` }}
+                  className="relative dark:text-white mt-2"
+                  style={{
+                    height: `${(Math.max(...eventPositions.map((e) => e.laneIndex)) + 1) * 32}px`,
+                  }}
                 >
-                  <div className="absolute top-[-20px] left-[-30px] bg-black dark:bg-white text-white dark:text-black px-2 py-1 rounded-full text-xs">
-                    {format(currentTime, "HH:mm:ss")}
+                  {eventPositions.map((event, index) => {
+                    const start = parseIndonesianDate(event.start);
+                    const end = parseIndonesianDate(event.end);
+                    const width = (differenceInDays(end, start) + 1) * 40;
+                    const left = differenceInDays(start, displayStartDate) * 40;
+                    const status = getEventStatus(event);
+
+                    return (
+                      <div
+                        key={index}
+                        className={`${colors[index % colors.length]} text-white p-2 absolute rounded-full h-8 overflow-hidden flex items-center cursor-pointer`}
+                        style={{
+                          width: `${width}px`,
+                          left: `${left}px`,
+                          top: `${event.laneIndex * 36}px`,
+                        }}
+                        onClick={() => handleEventClick(event)}
+                      >
+                        <span className="sticky left-0 z-10 flex flex-col truncate px-2 text-sm font-medium text-white drop-shadow-lg sm:text-base">
+                          {event.kegiatan}
+                        </span>
+                        <Chip
+                          size="sm"
+                          variant="solid"
+                          className="dark:bg-white bg-black dark:text-black text-white"
+                        >
+                          {status}
+                        </Chip>
+                      </div>
+                    );
+                  })}
+                  <div
+                    className="absolute top-[-40px] cursor-default bottom-0 w-[2px] bg-black dark:bg-white z-20 transition-opacity hover:opacity-10"
+                    style={{ left: `${currentTimePosition}px` }}
+                  >
+                    <div className="absolute top-[-20px] left-[-30px] bg-black dark:bg-white text-white dark:text-black px-2 py-1 rounded-full text-xs">
+                      {format(currentTime, "HH:mm:ss")}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollShadow>
         </CardBody>
       </Card>
 
