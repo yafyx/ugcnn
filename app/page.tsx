@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Card, CardHeader, CardBody } from "@nextui-org/card";
+import React, { useState, useCallback } from "react";
+import { Card, CardBody } from "@nextui-org/card";
 import {
   Button,
   Input,
@@ -8,8 +8,9 @@ import {
   CheckboxGroup,
   Checkbox,
 } from "@nextui-org/react";
-import Timeline from "@/components/timeline";
 import { Skeleton } from "@nextui-org/skeleton";
+import useSWR from "swr";
+import Timeline from "@/components/timeline";
 import JadwalTable from "@/components/jadwal-table";
 import MahasiswaTable from "@/components/mahasiswa-table";
 
@@ -50,120 +51,63 @@ interface KelasBaru {
   kelas_baru: string;
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function Home() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [jadwal, setJadwal] = useState<JadwalHari | null>(null);
-  const [kelasBaru, setKelasBaru] = useState<KelasBaru[]>([]);
   const [kelas, setKelas] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isClassDataLoading, setIsClassDataLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showKelasData, setShowKelasData] = useState(false);
-  const [mahasiswaBaru, setMahasiswaBaru] = useState<MahasiswaBaru[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [jadwalError, setJadwalError] = useState<string | null>(null);
-  const [kelasBaruError, setKelasBaruError] = useState<string | null>(null);
-  const [mahasiswaBaruError, setMahasiswaBaruError] = useState<string | null>(
-    null,
+  const [showKelasData, setShowKelasData] = useState(false);
+
+  const { data: eventsData, error: eventsError } = useSWR<ApiResponse>(
+    "https://baak-api.vercel.app/kalender",
+    fetcher,
   );
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch("https://baak-api.vercel.app/kalender");
-        if (!response.ok) {
-          throw new Error("Gagal mengambil data");
-        }
-        const data: ApiResponse = await response.json();
-        setEvents(data.data);
-        setIsLoading(false);
-      } catch (err) {
-        setError("Terjadi kesalahan saat mengambil data");
-        setIsLoading(false);
-      }
-    };
+  const { data: jadwalData, error: jadwalError } = useSWR(
+    showKelasData && selectedOptions.includes("jadwal")
+      ? `https://baak-api.vercel.app/jadwal/${kelas}`
+      : null,
+    fetcher,
+  );
 
-    fetchEvents();
-  }, []);
+  const { data: kelasBaruData, error: kelasBaruError } = useSWR(
+    showKelasData && selectedOptions.includes("kelasBaru")
+      ? `https://baak-api.vercel.app/kelasbaru/${kelas}`
+      : null,
+    fetcher,
+  );
 
-  const fetchJadwal = async () => {
-    try {
-      const response = await fetch(
-        `https://baak-api.vercel.app/jadwal/${kelas}`,
-      );
-      if (!response.ok) {
-        throw new Error("Gagal mengambil jadwal");
-      }
-      const data = await response.json();
-      setJadwal(data.data.jadwal);
-      setJadwalError(null);
-    } catch (err) {
-      setJadwalError("Terjadi kesalahan saat mengambil jadwal");
-    }
-  };
+  const { data: mahasiswaBaruData, error: mahasiswaBaruError } = useSWR(
+    showKelasData && selectedOptions.includes("mahasiswaBaru")
+      ? `https://baak-api.vercel.app/mahasiswabaru/${kelas}`
+      : null,
+    fetcher,
+  );
 
-  const fetchMahasiswaBaru = async () => {
-    try {
-      const response = await fetch(
-        `https://baak-api.vercel.app/mahasiswabaru/${kelas}`,
-      );
-      if (!response.ok) {
-        throw new Error("Gagal mengambil data mahasiswa baru");
-      }
-      const data = await response.json();
-      setMahasiswaBaru(data.data);
-      setMahasiswaBaruError(null);
-    } catch (err) {
-      setMahasiswaBaruError(
-        "Terjadi kesalahan saat mengambil data mahasiswa baru",
-      );
-    }
-  };
+  const handleKelasChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setKelas(e.target.value);
+    },
+    [],
+  );
 
-  const fetchKelasBaru = async () => {
-    try {
-      const response = await fetch(
-        `https://baak-api.vercel.app/kelasbaru/${kelas}`,
-      );
-      if (!response.ok) {
-        throw new Error("Gagal mengambil data kelas baru");
-      }
-      const data = await response.json();
-      setKelasBaru(data.data);
-      setKelasBaruError(null);
-    } catch (err) {
-      setKelasBaruError("Terjadi kesalahan saat mengambil data kelas baru");
-    }
-  };
-
-  const handleKelasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKelas(e.target.value);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     setShowKelasData(true);
-    setIsClassDataLoading(true);
+  }, []);
 
-    const promises = [];
+  const isLoading = !eventsData && !eventsError;
+  const isClassDataLoading =
+    (selectedOptions.includes("jadwal") && !jadwalData && !jadwalError) ||
+    (selectedOptions.includes("kelasBaru") &&
+      !kelasBaruData &&
+      !kelasBaruError) ||
+    (selectedOptions.includes("mahasiswaBaru") &&
+      !mahasiswaBaruData &&
+      !mahasiswaBaruError);
 
-    if (selectedOptions.includes("jadwal")) {
-      promises.push(fetchJadwal());
-    }
-    if (selectedOptions.includes("kelasBaru")) {
-      promises.push(fetchKelasBaru());
-    }
-    if (selectedOptions.includes("mahasiswaBaru")) {
-      promises.push(fetchMahasiswaBaru());
-    }
-
-    Promise.all(promises).then(() => {
-      setIsClassDataLoading(false);
-    });
-  };
-
-  if (error) {
-    return <div>Error: {error}</div>;
+  if (eventsError) {
+    return <div>Error: Failed to load data</div>;
   }
 
   return (
@@ -219,11 +163,18 @@ export default function Home() {
                   {jadwalError ? (
                     <Card>
                       <CardBody>
-                        <p className="text-red-500">{jadwalError}</p>
+                        <p className="text-red-500">
+                          Failed to load jadwal data
+                        </p>
                       </CardBody>
                     </Card>
                   ) : (
-                    jadwal && <JadwalTable jadwal={jadwal} kelas={kelas} />
+                    jadwalData && (
+                      <JadwalTable
+                        jadwal={jadwalData.data.jadwal}
+                        kelas={kelas}
+                      />
+                    )
                   )}
                 </div>
               )}
@@ -233,11 +184,18 @@ export default function Home() {
                   {kelasBaruError ? (
                     <Card>
                       <CardBody>
-                        <p className="text-red-500">{kelasBaruError}</p>
+                        <p className="text-red-500">
+                          Failed to load kelas baru data
+                        </p>
                       </CardBody>
                     </Card>
                   ) : (
-                    <MahasiswaTable data={kelasBaru} type="kelasBaru" />
+                    kelasBaruData && (
+                      <MahasiswaTable
+                        data={kelasBaruData.data}
+                        type="kelasBaru"
+                      />
+                    )
                   )}
                 </div>
               )}
@@ -247,11 +205,18 @@ export default function Home() {
                   {mahasiswaBaruError ? (
                     <Card>
                       <CardBody>
-                        <p className="text-red-500">{mahasiswaBaruError}</p>
+                        <p className="text-red-500">
+                          Failed to load mahasiswa baru data
+                        </p>
                       </CardBody>
                     </Card>
                   ) : (
-                    <MahasiswaTable data={mahasiswaBaru} type="mahasiswaBaru" />
+                    mahasiswaBaruData && (
+                      <MahasiswaTable
+                        data={mahasiswaBaruData.data}
+                        type="mahasiswaBaru"
+                      />
+                    )
                   )}
                 </div>
               )}
@@ -272,7 +237,7 @@ export default function Home() {
           </CardBody>
         </Card>
       ) : (
-        <Timeline events={events} />
+        eventsData && <Timeline events={eventsData.data} />
       )}
     </div>
   );
