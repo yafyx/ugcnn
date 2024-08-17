@@ -12,6 +12,11 @@ import { Button } from "@nextui-org/react";
 import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 interface Jadwal {
   nama: string;
