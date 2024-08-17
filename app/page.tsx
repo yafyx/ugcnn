@@ -36,7 +36,13 @@ interface Jadwal {
 interface JadwalHari {
   [key: string]: Jadwal[] | null;
 }
-
+interface MahasiswaBaru {
+  no_pend: string;
+  nama: string;
+  npm: string;
+  kelas: string;
+  keterangan: string;
+}
 interface KelasBaru {
   npm: string;
   nama: string;
@@ -53,6 +59,7 @@ export default function Home() {
   const [isClassDataLoading, setIsClassDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showKelasData, setShowKelasData] = useState(false);
+  const [mahasiswaBaru, setMahasiswaBaru] = useState<MahasiswaBaru[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
   useEffect(() => {
@@ -89,6 +96,21 @@ export default function Home() {
     }
   };
 
+  const fetchMahasiswaBaru = async () => {
+    try {
+      const response = await fetch(
+        `https://baak-api.vercel.app/mahasiswabaru/${kelas}`
+      );
+      if (!response.ok) {
+        throw new Error("Gagal mengambil data mahasiswa baru");
+      }
+      const data = await response.json();
+      setMahasiswaBaru(data.data);
+    } catch (err) {
+      setError("Terjadi kesalahan saat mengambil data mahasiswa baru");
+    }
+  };
+
   const fetchKelasBaru = async () => {
     try {
       const response = await fetch(
@@ -112,7 +134,20 @@ export default function Home() {
     e.preventDefault();
     setShowKelasData(true);
     setIsClassDataLoading(true);
-    Promise.all([fetchJadwal(), fetchKelasBaru()]).then(() => {
+
+    const promises = [];
+
+    if (selectedOptions.includes("jadwal")) {
+      promises.push(fetchJadwal());
+    }
+    if (selectedOptions.includes("kelasBaru")) {
+      promises.push(fetchKelasBaru());
+    }
+    if (selectedOptions.includes("mahasiswaBaru")) {
+      promises.push(fetchMahasiswaBaru());
+    }
+
+    Promise.all(promises).then(() => {
       setIsClassDataLoading(false);
     });
   };
@@ -144,7 +179,18 @@ export default function Home() {
             onValueChange={setSelectedOptions}
           >
             <Checkbox value="jadwal">Jadwal Kelas</Checkbox>
-            <Checkbox value="mahasiswa">Daftar Mahasiswa</Checkbox>
+            <Checkbox
+              value="kelasBaru"
+              isDisabled={selectedOptions.includes("mahasiswaBaru")}
+            >
+              Kelas Baru
+            </Checkbox>
+            <Checkbox
+              value="mahasiswaBaru"
+              isDisabled={selectedOptions.includes("kelasBaru")}
+            >
+              Mahasiswa Baru
+            </Checkbox>
           </CheckboxGroup>
           <Button type="submit" color="primary">
             Tampilkan Data
@@ -164,9 +210,15 @@ export default function Home() {
                 </div>
               )}
 
-              {selectedOptions.includes("mahasiswa") && (
+              {selectedOptions.includes("kelasBaru") && (
                 <div className="w-full md:w-1/2">
-                  <MahasiswaTable kelasBaru={kelasBaru} />
+                  <MahasiswaTable data={kelasBaru} type="kelasBaru" />
+                </div>
+              )}
+
+              {selectedOptions.includes("mahasiswaBaru") && (
+                <div className="w-full md:w-1/2">
+                  <MahasiswaTable data={mahasiswaBaru} type="mahasiswaBaru" />
                 </div>
               )}
             </>

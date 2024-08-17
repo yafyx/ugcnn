@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useMemo, useCallback } from "react";
 import {
   Table,
@@ -15,56 +16,100 @@ import {
   Chip,
   User,
   Pagination,
+  Selection,
+  SortDescriptor,
 } from "@nextui-org/react";
 import { SearchIcon } from "@/components/SearchIcon";
 import { ChevronDownIcon } from "@/components/ChevronDownIcon";
 import { capitalize } from "@/config/utils";
 
-const columns = [
-  { name: "NAMA", uid: "nama", sortable: true },
-  { name: "NPM", uid: "npm", sortable: true },
-  { name: "KELAS LAMA", uid: "kelas_lama", sortable: true },
-  { name: "KELAS BARU", uid: "kelas_baru", sortable: true },
-];
-
 const ROWS_PER_PAGE = 10;
 
-export default function MahasiswaTable({ kelasBaru }) {
+interface MahasiswaBaru {
+  no_pend: string;
+  nama: string;
+  npm: string;
+  kelas: string;
+  keterangan: string;
+}
+
+interface KelasBaru {
+  npm: string;
+  nama: string;
+  kelas_lama: string;
+  kelas_baru: string;
+}
+
+type MahasiswaItem = MahasiswaBaru | KelasBaru;
+
+interface MahasiswaTableProps {
+  data: MahasiswaItem[];
+  type: "mahasiswaBaru" | "kelasBaru";
+}
+
+export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const [filterValue, setFilterValue] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
+    new Set(["nama", "npm", "kelas"])
+  );
+  const [statusFilter, setStatusFilter] = useState<Selection>("all");
   const [rowsPerPage, setRowsPerPage] = useState(ROWS_PER_PAGE);
-  const [page, setPage] = useState(1);
-  const [sortDescriptor, setSortDescriptor] = useState({
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "nama",
     direction: "ascending",
   });
+  const [page, setPage] = useState(1);
 
-  const hasSearchFilter = Boolean(filterValue);
+  const columns = useMemo(() => {
+    if (type === "mahasiswaBaru") {
+      return [
+        { name: "NO PEND", uid: "no_pend", sortable: true },
+        { name: "NAMA", uid: "nama", sortable: true },
+        { name: "NPM", uid: "npm", sortable: true },
+        { name: "KELAS", uid: "kelas", sortable: true },
+        { name: "KETERANGAN", uid: "keterangan", sortable: true },
+      ];
+    } else {
+      return [
+        { name: "NPM", uid: "npm", sortable: true },
+        { name: "NAMA", uid: "nama", sortable: true },
+        { name: "KELAS LAMA", uid: "kelas_lama", sortable: true },
+        { name: "KELAS BARU", uid: "kelas_baru", sortable: true },
+      ];
+    }
+  }, [type]);
 
   const statusOptions = useMemo(() => {
-    const uniqueKelas = [...new Set(kelasBaru.map((item) => item.kelas_baru))];
+    const field = type === "mahasiswaBaru" ? "kelas" : "kelas_baru";
+    const uniqueKelas = Array.from(
+      new Set(data.map((item) => item[field as keyof MahasiswaItem]))
+    );
     return uniqueKelas.map((kelas) => ({ name: kelas, uid: kelas }));
-  }, [kelasBaru]);
+  }, [data, type]);
 
   const filteredItems = useMemo(() => {
-    let filteredUsers = [...kelasBaru];
+    let filteredData = [...data];
 
-    if (hasSearchFilter) {
-      filteredUsers = filteredUsers.filter((user) =>
-        user.nama.toLowerCase().includes(filterValue.toLowerCase())
+    if (filterValue) {
+      filteredData = filteredData.filter((item) =>
+        item.nama.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
     if (
       statusFilter !== "all" &&
-      Array.from(statusFilter).length !== statusOptions.length
+      Array.from(statusFilter as Set<string>).length !== statusOptions.length
     ) {
-      filteredUsers = filteredUsers.filter((user) =>
-        Array.from(statusFilter).includes(user.kelas_baru)
+      const field = type === "mahasiswaBaru" ? "kelas" : "kelas_baru";
+      filteredData = filteredData.filter((item) =>
+        (statusFilter as Set<string>).has(
+          item[field as keyof MahasiswaItem] as string
+        )
       );
     }
 
-    return filteredUsers;
-  }, [kelasBaru, filterValue, statusFilter, statusOptions]);
+    return filteredData;
+  }, [data, filterValue, statusFilter, statusOptions, type]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -77,13 +122,25 @@ export default function MahasiswaTable({ kelasBaru }) {
 
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => {
-      const first = a[sortDescriptor.column];
-      const second = b[sortDescriptor.column];
+      const first = a[sortDescriptor.column as keyof MahasiswaItem];
+      const second = b[sortDescriptor.column as keyof MahasiswaItem];
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [sortDescriptor, items]);
+
+  const renderCell = useCallback(
+    (item: MahasiswaItem, columnKey: keyof MahasiswaItem) => {
+      const cellValue = item[columnKey];
+
+      switch (columnKey) {
+        default:
+          return cellValue;
+      }
+    },
+    []
+  );
 
   const onNextPage = useCallback(() => {
     if (page < pages) {
@@ -97,12 +154,15 @@ export default function MahasiswaTable({ kelasBaru }) {
     }
   }, [page]);
 
-  const onRowsPerPageChange = useCallback((e) => {
-    setRowsPerPage(Number(e.target.value));
-    setPage(1);
-  }, []);
+  const onRowsPerPageChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setRowsPerPage(Number(e.target.value));
+      setPage(1);
+    },
+    []
+  );
 
-  const onSearchChange = useCallback((value) => {
+  const onSearchChange = useCallback((value: string) => {
     if (value) {
       setFilterValue(value);
       setPage(1);
@@ -158,7 +218,7 @@ export default function MahasiswaTable({ kelasBaru }) {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Total {kelasBaru.length} mahasiswa
+            Total {data.length} users
           </span>
           <label className="flex items-center text-default-400 text-small">
             Rows per page:
@@ -177,9 +237,9 @@ export default function MahasiswaTable({ kelasBaru }) {
   }, [
     filterValue,
     statusFilter,
-    onRowsPerPageChange,
-    kelasBaru.length,
     onSearchChange,
+    onRowsPerPageChange,
+    data.length,
     onClear,
     statusOptions,
   ]);
@@ -188,7 +248,9 @@ export default function MahasiswaTable({ kelasBaru }) {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
         <span className="w-[30%] text-small text-default-400">
-          {`${filteredItems.length} mahasiswa`}
+          {selectedKeys === "all"
+            ? "All items selected"
+            : `${selectedKeys.size} of ${filteredItems.length} selected`}
         </span>
         <Pagination
           isCompact
@@ -219,46 +281,30 @@ export default function MahasiswaTable({ kelasBaru }) {
         </div>
       </div>
     );
-  }, [filteredItems.length, page, pages, onNextPage, onPreviousPage]);
-
-  const renderCell = useCallback((user, columnKey) => {
-    const cellValue = user[columnKey];
-
-    switch (columnKey) {
-      case "nama":
-        return (
-          <User
-            avatarProps={{ radius: "lg", src: user.avatar }}
-            description={user.npm}
-            name={cellValue}
-          >
-            {user.npm}
-          </User>
-        );
-      case "kelas_baru":
-        return (
-          <Chip className="capitalize" size="sm" variant="flat">
-            {cellValue}
-          </Chip>
-        );
-      default:
-        return cellValue;
-    }
-  }, []);
+  }, [
+    selectedKeys,
+    filteredItems.length,
+    page,
+    pages,
+    onPreviousPage,
+    onNextPage,
+  ]);
 
   return (
     <Table
-      aria-label="Example table with custom cells, pagination and sorting"
       isHeaderSticky
       bottomContent={bottomContent}
       bottomContentPlacement="outside"
       classNames={{
         wrapper: "max-h-[382px]",
       }}
+      selectedKeys={selectedKeys}
+      selectionMode="multiple"
       sortDescriptor={sortDescriptor}
       topContent={topContent}
       topContentPlacement="outside"
-      onSortChange={setSortDescriptor}
+      onSelectionChange={(keys) => setSelectedKeys(keys)}
+      onSortChange={(descriptor) => setSortDescriptor(descriptor)}
     >
       <TableHeader columns={columns}>
         {(column) => (
@@ -271,11 +317,13 @@ export default function MahasiswaTable({ kelasBaru }) {
           </TableColumn>
         )}
       </TableHeader>
-      <TableBody items={sortedItems}>
+      <TableBody emptyContent={"Not found"} items={sortedItems}>
         {(item) => (
           <TableRow key={item.npm}>
             {(columnKey) => (
-              <TableCell>{renderCell(item, columnKey)}</TableCell>
+              <TableCell>
+                {renderCell(item, columnKey as keyof MahasiswaItem)}
+              </TableCell>
             )}
           </TableRow>
         )}

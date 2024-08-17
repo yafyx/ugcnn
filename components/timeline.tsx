@@ -56,7 +56,7 @@ const colors = [
   "bg-rose-700",
 ];
 
-const parseIndonesianDate = (dateString: string) => {
+const parseDate = (dateString: string) => {
   const [day, month, year] = dateString.split(" ");
   const monthMap: { [key: string]: string } = {
     Januari: "01",
@@ -92,8 +92,8 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   useEffect(() => {
     if (timelineRef.current && events.length > 0) {
       const currentDate = new Date();
-      const earliestStart = parseIndonesianDate(events[0].start);
-      const latestEnd = parseIndonesianDate(events[events.length - 1].end);
+      const earliestStart = parseDate(events[0].start);
+      const latestEnd = parseDate(events[events.length - 1].end);
 
       if (
         isWithinInterval(currentDate, { start: earliestStart, end: latestEnd })
@@ -113,8 +113,8 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
   const adjustedEvents = events.map((event) => {
-    const start = parseIndonesianDate(event.start);
-    const end = parseIndonesianDate(event.end);
+    const start = parseDate(event.start);
+    const end = parseDate(event.end);
     if (isSameDay(start, end)) {
       return {
         ...event,
@@ -125,14 +125,14 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   });
 
   const earliestStart = adjustedEvents.reduce((earliest, event) => {
-    const start = parseIndonesianDate(event.start);
+    const start = parseDate(event.start);
     return start < earliest ? start : earliest;
-  }, parseIndonesianDate(adjustedEvents[0].start));
+  }, parseDate(adjustedEvents[0].start));
 
   const latestEnd = adjustedEvents.reduce((latest, event) => {
-    const end = parseIndonesianDate(event.end);
+    const end = parseDate(event.end);
     return end > latest ? end : latest;
-  }, parseIndonesianDate(adjustedEvents[0].end));
+  }, parseDate(adjustedEvents[0].end));
 
   const displayEndDate = addDays(latestEnd, 27);
   const displayStartDate = startOfMonth(earliestStart);
@@ -160,8 +160,8 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
     differenceInDays(currentTime, displayStartDate) * 40;
 
   const getEventStatus = (event: Event) => {
-    const start = parseIndonesianDate(event.start);
-    const end = parseIndonesianDate(event.end);
+    const start = parseDate(event.start);
+    const end = parseDate(event.end);
     const now = currentTime;
 
     if (isBefore(now, start)) {
@@ -178,8 +178,8 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   const calculateEventPositions = (events: Event[]) => {
     const lanes: { start: Date; end: Date }[] = [];
     return events.map((event) => {
-      const start = parseIndonesianDate(event.start);
-      const end = parseIndonesianDate(event.end);
+      const start = parseDate(event.start);
+      const end = parseDate(event.end);
       let laneIndex = lanes.findIndex(
         (lane) =>
           !isWithinInterval(start, { start: lane.start, end: lane.end }) &&
@@ -267,8 +267,8 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                   }}
                 >
                   {eventPositions.map((event, index) => {
-                    const start = parseIndonesianDate(event.start);
-                    const end = parseIndonesianDate(event.end);
+                    const start = parseDate(event.start);
+                    const end = parseDate(event.end);
                     const width = (differenceInDays(end, start) + 1) * 40;
                     const left = differenceInDays(start, displayStartDate) * 40;
                     const status = getEventStatus(event);
