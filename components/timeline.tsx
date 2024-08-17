@@ -32,28 +32,28 @@ interface Event {
   end: string;
 }
 
-const colors = [
-  "bg-slate-600",
-  "bg-zinc-600",
-  "bg-stone-600",
-  "bg-neutral-600",
-  "bg-red-700",
-  "bg-orange-700",
-  "bg-amber-700",
-  "bg-yellow-700",
-  "bg-lime-700",
-  "bg-green-700",
-  "bg-emerald-700",
-  "bg-teal-700",
-  "bg-cyan-700",
-  "bg-sky-700",
-  "bg-blue-700",
-  "bg-indigo-700",
-  "bg-violet-700",
-  "bg-purple-700",
-  "bg-fuchsia-700",
-  "bg-pink-700",
-  "bg-rose-700",
+const gradients = [
+  "bg-gradient-to-b from-slate-700 to-slate-800",
+  "bg-gradient-to-b from-zinc-700 to-zinc-800",
+  "bg-gradient-to-b from-neutral-700 to-neutral-800",
+  "bg-gradient-to-b from-stone-700 to-stone-800",
+  "bg-gradient-to-b from-red-800 to-red-900",
+  "bg-gradient-to-b from-orange-800 to-orange-900",
+  "bg-gradient-to-b from-amber-800 to-amber-900",
+  "bg-gradient-to-b from-yellow-800 to-yellow-900",
+  "bg-gradient-to-b from-lime-800 to-lime-900",
+  "bg-gradient-to-b from-green-800 to-green-900",
+  "bg-gradient-to-b from-emerald-800 to-emerald-900",
+  "bg-gradient-to-b from-teal-800 to-teal-900",
+  "bg-gradient-to-b from-cyan-800 to-cyan-900",
+  "bg-gradient-to-b from-sky-800 to-sky-900",
+  "bg-gradient-to-b from-blue-800 to-blue-900",
+  "bg-gradient-to-b from-indigo-800 to-indigo-900",
+  "bg-gradient-to-b from-violet-800 to-violet-900",
+  "bg-gradient-to-b from-purple-800 to-purple-900",
+  "bg-gradient-to-b from-fuchsia-800 to-fuchsia-900",
+  "bg-gradient-to-b from-pink-800 to-pink-900",
+  "bg-gradient-to-b from-rose-800 to-rose-900",
 ];
 
 const parseDate = (dateString: string) => {
@@ -206,9 +206,6 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
 
   return (
     <div className="rounded-lg overflow-hidden">
-      {/* <div className="flex items-center justify-between dark:text-white p-4">
-        <h2 className="text-2xl font-bold">Timeline Kalender Akademik</h2>
-      </div> */}
       <Card className="overflow-hidden">
         <CardBody className="p-0">
           <ScrollShadow orientation="horizontal" size={20}>
@@ -276,7 +273,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                     return (
                       <div
                         key={index}
-                        className={`${colors[index % colors.length]} text-white p-2 absolute rounded-full h-8 overflow-hidden flex items-center cursor-pointer`}
+                        className={`${gradients[index % gradients.length]} text-white p-2 absolute rounded-full h-8 overflow-hidden flex items-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:brightness-110`}
                         style={{
                           width: `${width}px`,
                           left: `${left}px`,
@@ -290,7 +287,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                         <Chip
                           size="sm"
                           variant="solid"
-                          className="dark:bg-white bg-black dark:text-black text-white"
+                          className="bg-white/10 text-white"
                         >
                           {status}
                         </Chip>
