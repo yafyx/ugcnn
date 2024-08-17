@@ -13,8 +13,6 @@ import {
   Dropdown,
   DropdownMenu,
   DropdownItem,
-  Chip,
-  User,
   Pagination,
   Selection,
   SortDescriptor,
@@ -22,9 +20,13 @@ import {
 import { SearchIcon } from "@/components/SearchIcon";
 import { ChevronDownIcon } from "@/components/ChevronDownIcon";
 import { capitalize } from "@/config/utils";
-import { CSVLink } from "react-csv";
-import jsPDF from "jspdf";
+import dynamic from "next/dynamic";
+import { jsPDF } from "jspdf";
 import "jspdf-autotable";
+
+const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
+  ssr: false,
+});
 
 const ROWS_PER_PAGE = 10;
 
@@ -53,9 +55,6 @@ interface MahasiswaTableProps {
 export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
-  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
-    new Set(["nama", "npm", "kelas"]),
-  );
   const [statusFilter, setStatusFilter] = useState<Selection>("all");
   const [rowsPerPage, setRowsPerPage] = useState(ROWS_PER_PAGE);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
@@ -65,22 +64,20 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const [page, setPage] = useState(1);
 
   const columns = useMemo(() => {
-    if (type === "mahasiswaBaru") {
-      return [
-        { name: "NO PEND", uid: "no_pend", sortable: true },
-        { name: "NAMA", uid: "nama", sortable: true },
-        { name: "NPM", uid: "npm", sortable: true },
-        { name: "KELAS", uid: "kelas", sortable: true },
-        { name: "KETERANGAN", uid: "keterangan", sortable: true },
-      ];
-    } else {
-      return [
-        { name: "NPM", uid: "npm", sortable: true },
-        { name: "NAMA", uid: "nama", sortable: true },
-        { name: "KELAS LAMA", uid: "kelas_lama", sortable: true },
-        { name: "KELAS BARU", uid: "kelas_baru", sortable: true },
-      ];
-    }
+    return type === "mahasiswaBaru"
+      ? [
+          { name: "NO PEND", uid: "no_pend", sortable: true },
+          { name: "NAMA", uid: "nama", sortable: true },
+          { name: "NPM", uid: "npm", sortable: true },
+          { name: "KELAS", uid: "kelas", sortable: true },
+          { name: "KETERANGAN", uid: "keterangan", sortable: true },
+        ]
+      : [
+          { name: "NPM", uid: "npm", sortable: true },
+          { name: "NAMA", uid: "nama", sortable: true },
+          { name: "KELAS LAMA", uid: "kelas_lama", sortable: true },
+          { name: "KELAS BARU", uid: "kelas_baru", sortable: true },
+        ];
   }, [type]);
 
   const statusOptions = useMemo(() => {
@@ -134,14 +131,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   }, [sortDescriptor, items]);
 
   const renderCell = useCallback(
-    (item: MahasiswaItem, columnKey: keyof MahasiswaItem) => {
-      const cellValue = item[columnKey];
-
-      switch (columnKey) {
-        default:
-          return cellValue;
-      }
-    },
+    (item: MahasiswaItem, columnKey: keyof MahasiswaItem) => item[columnKey],
     [],
   );
 
@@ -166,12 +156,8 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   );
 
   const onSearchChange = useCallback((value: string) => {
-    if (value) {
-      setFilterValue(value);
-      setPage(1);
-    } else {
-      setFilterValue("");
-    }
+    setFilterValue(value);
+    setPage(1);
   }, []);
 
   const onClear = useCallback(() => {
@@ -179,7 +165,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
     setPage(1);
   }, []);
 
-  const exportToPDF = () => {
+  const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
     doc.autoTable({
       head: [columns.map((col) => col.name)],
@@ -190,7 +176,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
     doc.save(
       `${type === "mahasiswaBaru" ? "mahasiswa_baru" : "kelas_baru"}_${new Date().toISOString()}.pdf`,
     );
-  };
+  }, [columns, filteredItems, type]);
 
   const csvData = useMemo(() => {
     const headers = columns.map((col) => col.name);
@@ -202,8 +188,8 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
 
   const exportFileName = `${type === "mahasiswaBaru" ? "mahasiswa_baru" : "kelas_baru"}_${new Date().toISOString()}.csv`;
 
-  const topContent = useMemo(() => {
-    return (
+  const topContent = useMemo(
+    () => (
       <div className="flex flex-col gap-4">
         <div className="flex items-end justify-between gap-3">
           <Input
@@ -212,7 +198,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
             placeholder="Search by name..."
             startContent={<SearchIcon />}
             value={filterValue}
-            onClear={() => onClear()}
+            onClear={onClear}
             onValueChange={onSearchChange}
           />
           <div className="flex gap-3">
@@ -265,21 +251,23 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
           </label>
         </div>
       </div>
-    );
-  }, [
-    filterValue,
-    statusFilter,
-    onSearchChange,
-    onRowsPerPageChange,
-    data.length,
-    onClear,
-    statusOptions,
-    csvData,
-    exportFileName,
-  ]);
+    ),
+    [
+      filterValue,
+      statusFilter,
+      onSearchChange,
+      onRowsPerPageChange,
+      data.length,
+      onClear,
+      statusOptions,
+      csvData,
+      exportFileName,
+      exportToPDF,
+    ],
+  );
 
-  const bottomContent = useMemo(() => {
-    return (
+  const bottomContent = useMemo(
+    () => (
       <div className="flex items-center justify-between px-2 py-2">
         <span className="w-[30%] text-small text-default-400">
           {selectedKeys === "all"
@@ -314,15 +302,16 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
           </Button>
         </div>
       </div>
-    );
-  }, [
-    selectedKeys,
-    filteredItems.length,
-    page,
-    pages,
-    onPreviousPage,
-    onNextPage,
-  ]);
+    ),
+    [
+      selectedKeys,
+      filteredItems.length,
+      page,
+      pages,
+      onPreviousPage,
+      onNextPage,
+    ],
+  );
 
   return (
     <Table
@@ -337,8 +326,8 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
       sortDescriptor={sortDescriptor}
       topContent={topContent}
       topContentPlacement="outside"
-      onSelectionChange={(keys) => setSelectedKeys(keys)}
-      onSortChange={(descriptor) => setSortDescriptor(descriptor)}
+      onSelectionChange={setSelectedKeys}
+      onSortChange={setSortDescriptor}
     >
       <TableHeader columns={columns}>
         {(column) => (
