@@ -61,6 +61,11 @@ export default function Home() {
   const [showKelasData, setShowKelasData] = useState(false);
   const [mahasiswaBaru, setMahasiswaBaru] = useState<MahasiswaBaru[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [jadwalError, setJadwalError] = useState<string | null>(null);
+  const [kelasBaruError, setKelasBaruError] = useState<string | null>(null);
+  const [mahasiswaBaruError, setMahasiswaBaruError] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -91,8 +96,9 @@ export default function Home() {
       }
       const data = await response.json();
       setJadwal(data.data.jadwal);
+      setJadwalError(null);
     } catch (err) {
-      setError("Terjadi kesalahan saat mengambil jadwal");
+      setJadwalError("Terjadi kesalahan saat mengambil jadwal");
     }
   };
 
@@ -106,8 +112,11 @@ export default function Home() {
       }
       const data = await response.json();
       setMahasiswaBaru(data.data);
+      setMahasiswaBaruError(null);
     } catch (err) {
-      setError("Terjadi kesalahan saat mengambil data mahasiswa baru");
+      setMahasiswaBaruError(
+        "Terjadi kesalahan saat mengambil data mahasiswa baru",
+      );
     }
   };
 
@@ -121,8 +130,9 @@ export default function Home() {
       }
       const data = await response.json();
       setKelasBaru(data.data);
+      setKelasBaruError(null);
     } catch (err) {
-      setError("Terjadi kesalahan saat mengambil data kelas baru");
+      setKelasBaruError("Terjadi kesalahan saat mengambil data kelas baru");
     }
   };
 
@@ -204,21 +214,45 @@ export default function Home() {
             <Spinner color="default" />
           ) : (
             <>
-              {selectedOptions.includes("jadwal") && jadwal && (
+              {selectedOptions.includes("jadwal") && (
                 <div className="w-full md:w-1/2">
-                  <JadwalTable jadwal={jadwal} kelas={kelas} />
+                  {jadwalError ? (
+                    <Card>
+                      <CardBody>
+                        <p className="text-red-500">{jadwalError}</p>
+                      </CardBody>
+                    </Card>
+                  ) : (
+                    jadwal && <JadwalTable jadwal={jadwal} kelas={kelas} />
+                  )}
                 </div>
               )}
 
               {selectedOptions.includes("kelasBaru") && (
                 <div className="w-full md:w-1/2">
-                  <MahasiswaTable data={kelasBaru} type="kelasBaru" />
+                  {kelasBaruError ? (
+                    <Card>
+                      <CardBody>
+                        <p className="text-red-500">{kelasBaruError}</p>
+                      </CardBody>
+                    </Card>
+                  ) : (
+                    <MahasiswaTable data={kelasBaru} type="kelasBaru" />
+                  )}
                 </div>
               )}
 
               {selectedOptions.includes("mahasiswaBaru") && (
                 <div className="w-full md:w-1/2">
-                  <MahasiswaTable data={mahasiswaBaru} type="mahasiswaBaru" />
+                  {mahasiswaBaruError ? (
+                    <Card>
+                      <CardBody>
+                        <p className="text-red-500">{mahasiswaBaruError}</p>
+                      </CardBody>
+                    </Card>
+                  ) : (
+                    <MahasiswaTable data={mahasiswaBaru} type="mahasiswaBaru" />
+                  )}
                 </div>
               )}
             </>
