@@ -22,6 +22,9 @@ import {
 import { SearchIcon } from "@/components/SearchIcon";
 import { ChevronDownIcon } from "@/components/ChevronDownIcon";
 import { capitalize } from "@/config/utils";
+import { CSVLink } from "react-csv";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const ROWS_PER_PAGE = 10;
 
@@ -176,6 +179,29 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
     setPage(1);
   }, []);
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.autoTable({
+      head: [columns.map((col) => col.name)],
+      body: filteredItems.map((item) =>
+        columns.map((col) => item[col.uid as keyof MahasiswaItem]),
+      ),
+    });
+    doc.save(
+      `${type === "mahasiswaBaru" ? "mahasiswa_baru" : "kelas_baru"}_${new Date().toISOString()}.pdf`,
+    );
+  };
+
+  const csvData = useMemo(() => {
+    const headers = columns.map((col) => col.name);
+    const rows = filteredItems.map((item) =>
+      columns.map((col) => item[col.uid as keyof MahasiswaItem]),
+    );
+    return [headers, ...rows];
+  }, [columns, filteredItems]);
+
+  const exportFileName = `${type === "mahasiswaBaru" ? "mahasiswa_baru" : "kelas_baru"}_${new Date().toISOString()}.csv`;
+
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
@@ -214,6 +240,12 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
                 ))}
               </DropdownMenu>
             </Dropdown>
+            <Button color="secondary" onPress={exportToPDF}>
+              Export to PDF
+            </Button>
+            <CSVLink data={csvData} filename={exportFileName}>
+              <Button color="primary">Export to CSV</Button>
+            </CSVLink>
           </div>
         </div>
         <div className="flex items-center justify-between">
@@ -242,6 +274,8 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
     data.length,
     onClear,
     statusOptions,
+    csvData,
+    exportFileName,
   ]);
 
   const bottomContent = useMemo(() => {
