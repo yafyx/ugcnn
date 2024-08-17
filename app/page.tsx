@@ -84,7 +84,7 @@ export default function Home() {
   const fetchJadwal = async () => {
     try {
       const response = await fetch(
-        `https://baak-api.vercel.app/jadwal/${kelas}`
+        `https://baak-api.vercel.app/jadwal/${kelas}`,
       );
       if (!response.ok) {
         throw new Error("Gagal mengambil jadwal");
@@ -99,7 +99,7 @@ export default function Home() {
   const fetchMahasiswaBaru = async () => {
     try {
       const response = await fetch(
-        `https://baak-api.vercel.app/mahasiswabaru/${kelas}`
+        `https://baak-api.vercel.app/mahasiswabaru/${kelas}`,
       );
       if (!response.ok) {
         throw new Error("Gagal mengambil data mahasiswa baru");
@@ -114,7 +114,7 @@ export default function Home() {
   const fetchKelasBaru = async () => {
     try {
       const response = await fetch(
-        `https://baak-api.vercel.app/kelasbaru/${kelas}`
+        `https://baak-api.vercel.app/kelasbaru/${kelas}`,
       );
       if (!response.ok) {
         throw new Error("Gagal mengambil data kelas baru");
@@ -157,12 +157,12 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col w-full min-h-screen p-4">
-      <p className="py-8 pt-0 text-4xl sm:text-7xl font-bold relative z-20 bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 to-neutral-500">
+    <div className="flex min-h-screen w-full flex-col p-4">
+      <p className="relative z-20 bg-gradient-to-b from-neutral-200 to-neutral-500 bg-clip-text py-8 pt-0 text-4xl font-bold text-transparent sm:text-7xl">
         cari jadwal dan daftar mahasiswa baru
       </p>
       <form onSubmit={handleSubmit} className="mb-4">
-        <div className="flex flex-col gap-4 ">
+        <div className="flex flex-col gap-4">
           <Input
             className="font-semibold"
             labelPlacement="outside"
@@ -199,7 +199,7 @@ export default function Home() {
       </form>
 
       {showKelasData && (
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <div className="mb-4 flex flex-col gap-4 md:flex-row">
           {isClassDataLoading ? (
             <Spinner color="default" />
           ) : (
@@ -226,7 +226,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="flex items-center justify-between dark:text-white p-4">
+      <div className="flex items-center justify-between p-4 dark:text-white">
         <h2 className="text-2xl font-bold">Timeline Kalender Akademik</h2>
       </div>
       {isLoading ? (

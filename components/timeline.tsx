@@ -153,7 +153,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
       acc[monthKey].push(date);
       return acc;
     },
-    {} as { [key: string]: Date[] }
+    {} as { [key: string]: Date[] },
   );
 
   const currentTimePosition =
@@ -183,7 +183,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
       let laneIndex = lanes.findIndex(
         (lane) =>
           !isWithinInterval(start, { start: lane.start, end: lane.end }) &&
-          !isWithinInterval(end, { start: lane.start, end: lane.end })
+          !isWithinInterval(end, { start: lane.start, end: lane.end }),
       );
 
       if (laneIndex === -1) {
@@ -205,21 +205,21 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   const eventPositions = calculateEventPositions(adjustedEvents);
 
   return (
-    <div className="rounded-lg overflow-hidden">
+    <div className="overflow-hidden rounded-lg">
       <Card className="overflow-hidden">
         <CardBody className="p-0">
           <ScrollShadow orientation="horizontal" size={20}>
             <div className="overflow-x-auto" ref={timelineRef}>
-              <div className="flex flex-col min-w-max relative h-auto py-4">
-                <div className="absolute top-28 left-[-20] right-0 bottom-0 pointer-events-none bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-opacity-50 bg-[length:40px_100%] bg-repeat-x"></div>
-                <div className="flex items-center dark:text-white p-2">
+              <div className="relative flex h-auto min-w-max flex-col py-4">
+                <div className="pointer-events-none absolute bottom-0 left-[-20] right-0 top-28 bg-opacity-50 bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-[length:40px_100%] bg-repeat-x"></div>
+                <div className="flex items-center p-2 dark:text-white">
                   {Object.keys(months).map((monthKey) => (
                     <div
                       key={monthKey}
-                      className="flex flex-col items-start sticky top-0 z-10"
+                      className="sticky top-0 z-10 flex flex-col items-start"
                       style={{ width: `${months[monthKey].length * 40}px` }}
                     >
-                      <h3 className="text-2xl font-bold p-2">
+                      <h3 className="p-2 text-2xl font-bold">
                         {format(months[monthKey][0], "MMMM yyyy", {
                           locale: id,
                         })}
@@ -228,7 +228,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                         {months[monthKey].map((date, index) => (
                           <div
                             key={`${monthKey}-${index}`}
-                            className="w-10 text-sm dark:text-white/70 text-black/70"
+                            className="w-10 text-sm text-black/70 dark:text-white/70"
                           >
                             {weekdays[date.getDay()]}
                           </div>
@@ -247,7 +247,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                       {dates.map((date, dateIndex) => (
                         <div
                           key={dateIndex}
-                          className="w-10 flex flex-col items-center"
+                          className="flex w-10 flex-col items-center"
                         >
                           <div className="flex items-center justify-center font-semibold">
                             {format(date, "d")}
@@ -258,7 +258,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                   ))}
                 </div>
                 <div
-                  className="relative dark:text-white mt-2"
+                  className="relative mt-2 dark:text-white"
                   style={{
                     height: `${(Math.max(...eventPositions.map((e) => e.laneIndex)) + 1) * 32}px`,
                   }}
@@ -273,7 +273,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                     return (
                       <div
                         key={index}
-                        className={`${gradients[index % gradients.length]} text-white p-2 absolute rounded-full h-8 overflow-hidden flex items-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:brightness-110`}
+                        className={`${gradients[index % gradients.length]} absolute flex h-8 cursor-pointer items-center overflow-hidden rounded-full p-2 text-white transition-all duration-300 hover:shadow-lg hover:brightness-110`}
                         style={{
                           width: `${width}px`,
                           left: `${left}px`,
@@ -295,10 +295,10 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                     );
                   })}
                   <div
-                    className="absolute top-[-40px] cursor-default bottom-0 w-[2px] bg-black dark:bg-white z-20 transition-opacity hover:opacity-10"
+                    className="absolute bottom-0 top-[-40px] z-20 w-[2px] cursor-default bg-black transition-opacity hover:opacity-10 dark:bg-white"
                     style={{ left: `${currentTimePosition}px` }}
                   >
-                    <div className="absolute top-[-20px] left-[-30px] bg-black dark:bg-white text-white dark:text-black px-2 py-1 rounded-full text-xs">
+                    <div className="absolute left-[-30px] top-[-20px] rounded-full bg-black px-2 py-1 text-xs text-white dark:bg-white dark:text-black">
                       {format(currentTime, "HH:mm:ss")}
                     </div>
                   </div>
@@ -319,7 +319,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                 </h2>
               </ModalHeader>
               <ModalBody>
-                <p className="text-foreground-600 text-xs sm:text-start sm:text-sm">
+                <p className="text-xs text-foreground-600 sm:text-start sm:text-sm">
                   {selectedEvent?.tanggal}
                 </p>
                 <Link
@@ -330,10 +330,10 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                   https://baak.gunadarma.ac.id/
                 </Link>
               </ModalBody>
-              <ModalFooter className="justify-between items-center">
+              <ModalFooter className="items-center justify-between">
                 <Chip
                   variant="solid"
-                  className="dark:bg-white bg-black dark:text-black text-white"
+                  className="bg-black text-white dark:bg-white dark:text-black"
                 >
                   {selectedEvent && getEventStatus(selectedEvent)}
                 </Chip>

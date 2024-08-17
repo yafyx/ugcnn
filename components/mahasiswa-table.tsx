@@ -51,7 +51,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
-    new Set(["nama", "npm", "kelas"])
+    new Set(["nama", "npm", "kelas"]),
   );
   const [statusFilter, setStatusFilter] = useState<Selection>("all");
   const [rowsPerPage, setRowsPerPage] = useState(ROWS_PER_PAGE);
@@ -83,7 +83,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const statusOptions = useMemo(() => {
     const field = type === "mahasiswaBaru" ? "kelas" : "kelas_baru";
     const uniqueKelas = Array.from(
-      new Set(data.map((item) => item[field as keyof MahasiswaItem]))
+      new Set(data.map((item) => item[field as keyof MahasiswaItem])),
     );
     return uniqueKelas.map((kelas) => ({ name: kelas, uid: kelas }));
   }, [data, type]);
@@ -93,7 +93,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
 
     if (filterValue) {
       filteredData = filteredData.filter((item) =>
-        item.nama.toLowerCase().includes(filterValue.toLowerCase())
+        item.nama.toLowerCase().includes(filterValue.toLowerCase()),
       );
     }
     if (
@@ -103,8 +103,8 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
       const field = type === "mahasiswaBaru" ? "kelas" : "kelas_baru";
       filteredData = filteredData.filter((item) =>
         (statusFilter as Set<string>).has(
-          item[field as keyof MahasiswaItem] as string
-        )
+          item[field as keyof MahasiswaItem] as string,
+        ),
       );
     }
 
@@ -139,7 +139,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
           return cellValue;
       }
     },
-    []
+    [],
   );
 
   const onNextPage = useCallback(() => {
@@ -159,7 +159,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
       setRowsPerPage(Number(e.target.value));
       setPage(1);
     },
-    []
+    [],
   );
 
   const onSearchChange = useCallback((value: string) => {
@@ -179,7 +179,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between gap-3 items-end">
+        <div className="flex items-end justify-between gap-3">
           <Input
             isClearable
             className="w-full sm:max-w-[44%]"
@@ -216,14 +216,14 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
             </Dropdown>
           </div>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-default-400 text-small">
+        <div className="flex items-center justify-between">
+          <span className="text-small text-default-400">
             Total {data.length} users
           </span>
-          <label className="flex items-center text-default-400 text-small">
+          <label className="flex items-center text-small text-default-400">
             Rows per page:
             <select
-              className="bg-transparent outline-none text-default-400 text-small"
+              className="bg-transparent text-small text-default-400 outline-none"
               onChange={onRowsPerPageChange}
             >
               <option value="5">5</option>
@@ -246,7 +246,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
 
   const bottomContent = useMemo(() => {
     return (
-      <div className="py-2 px-2 flex justify-between items-center">
+      <div className="flex items-center justify-between px-2 py-2">
         <span className="w-[30%] text-small text-default-400">
           {selectedKeys === "all"
             ? "All items selected"
@@ -261,7 +261,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
           total={pages}
           onChange={setPage}
         />
-        <div className="hidden sm:flex w-[30%] justify-end gap-2">
+        <div className="hidden w-[30%] justify-end gap-2 sm:flex">
           <Button
             isDisabled={pages === 1}
             size="sm"

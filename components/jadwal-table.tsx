@@ -63,7 +63,7 @@ const JadwalTable: React.FC<JadwalTableProps> = ({ jadwal, kelas }) => {
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>
                 </TableRow>
-              )
+              ),
             )}
           </TableBody>
         </Table>
