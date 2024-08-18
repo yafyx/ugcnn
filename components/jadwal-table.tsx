@@ -8,10 +8,18 @@ import {
   TableRow,
   TableCell,
 } from "@nextui-org/table";
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownSection,
+  DropdownItem,
+} from "@nextui-org/dropdown";
 import { Button } from "@nextui-org/react";
 import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { ChevronDownIcon } from "./ChevronDownIcon";
 declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -67,21 +75,37 @@ const JadwalTable: React.FC<JadwalTableProps> = ({ jadwal, kelas }) => {
 
   return (
     <Card className="mb-4">
-      <CardHeader className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Jadwal Kelas {kelas}</h2>
+      <CardHeader className="flex items-center justify-between p-4">
+        <h2 className="text-lg font-semibold">
+          Jadwal Kelas
+          <span className="uppercase"> {kelas}</span>
+        </h2>
         <div className="flex gap-2">
-          <CSVLink data={csvData} filename={`${exportFileName}.csv`}>
-            <Button color="primary" size="sm">
-              Export to CSV
-            </Button>
-          </CSVLink>
-          <Button color="secondary" size="sm" onPress={exportToPDF}>
-            Export to PDF
-          </Button>
+          <Dropdown>
+            <DropdownTrigger>
+              <Button endContent={<ChevronDownIcon />} variant="bordered">
+                Export
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu variant="faded">
+              <DropdownItem description="Ekspor jadwal ke file CSV" key="csv">
+                <CSVLink data={csvData} filename={`${exportFileName}.csv`}>
+                  Export to CSV
+                </CSVLink>
+              </DropdownItem>
+              <DropdownItem
+                key="csv"
+                description="Ekspor jadwal ke file PDF"
+                onPress={exportToPDF}
+              >
+                Export to PDF
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
         </div>
       </CardHeader>
       <CardBody>
-        <Table aria-label="Jadwal Kelas">
+        <Table shadow="none" aria-label="Jadwal Kelas">
           <TableHeader>
             <TableColumn>Hari</TableColumn>
             <TableColumn>Mata Kuliah</TableColumn>

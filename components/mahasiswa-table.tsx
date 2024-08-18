@@ -14,9 +14,9 @@ import {
   DropdownMenu,
   DropdownItem,
   Pagination,
-  Selection,
   SortDescriptor,
 } from "@nextui-org/react";
+import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { SearchIcon } from "@/components/SearchIcon";
 import { ChevronDownIcon } from "@/components/ChevronDownIcon";
 import { capitalize } from "@/config/utils";
@@ -54,8 +54,9 @@ interface MahasiswaTableProps {
 
 export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const [filterValue, setFilterValue] = useState("");
-  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
-  const [statusFilter, setStatusFilter] = useState<Selection>("all");
+  const [statusFilter, setStatusFilter] = useState<Set<string>>(
+    new Set(["all"]),
+  );
   const [rowsPerPage, setRowsPerPage] = useState(ROWS_PER_PAGE);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "nama",
@@ -85,7 +86,10 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
     const uniqueKelas = Array.from(
       new Set(data.map((item) => item[field as keyof MahasiswaItem])),
     );
-    return uniqueKelas.map((kelas) => ({ name: kelas, uid: kelas }));
+    return [
+      { name: "All", uid: "all" },
+      ...uniqueKelas.map((kelas) => ({ name: kelas, uid: kelas })),
+    ];
   }, [data, type]);
 
   const filteredItems = useMemo(() => {
@@ -96,20 +100,15 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
         item.nama.toLowerCase().includes(filterValue.toLowerCase()),
       );
     }
-    if (
-      statusFilter !== "all" &&
-      Array.from(statusFilter as Set<string>).length !== statusOptions.length
-    ) {
+    if (!statusFilter.has("all")) {
       const field = type === "mahasiswaBaru" ? "kelas" : "kelas_baru";
       filteredData = filteredData.filter((item) =>
-        (statusFilter as Set<string>).has(
-          item[field as keyof MahasiswaItem] as string,
-        ),
+        statusFilter.has(item[field as keyof MahasiswaItem] as string),
       );
     }
 
     return filteredData;
-  }, [data, filterValue, statusFilter, statusOptions, type]);
+  }, [data, filterValue, statusFilter, type]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -190,48 +189,75 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
 
   const topContent = useMemo(
     () => (
-      <div className="flex flex-col gap-4">
-        <div className="flex items-end justify-between gap-3">
-          <Input
-            isClearable
-            className="w-full sm:max-w-[44%]"
-            placeholder="Search by name..."
-            startContent={<SearchIcon />}
-            value={filterValue}
-            onClear={onClear}
-            onValueChange={onSearchChange}
-          />
-          <div className="flex gap-3">
-            <Dropdown>
-              <DropdownTrigger className="hidden sm:flex">
-                <Button
-                  endContent={<ChevronDownIcon className="text-small" />}
-                  variant="flat"
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col items-start justify-between gap-3 p-1 sm:flex-row sm:items-center">
+          <h2 className="text-lg font-semibold">
+            Daftar Kelas
+            <span className="uppercase"></span>
+          </h2>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Input
+              variant="faded"
+              isClearable
+              className="w-full sm:w-auto"
+              placeholder="Cari Nama..."
+              startContent={<SearchIcon />}
+              value={filterValue}
+              onClear={onClear}
+              onValueChange={onSearchChange}
+            />
+            <div className="flex gap-3">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button
+                    endContent={<ChevronDownIcon className="text-small" />}
+                    variant="flat"
+                  >
+                    Filter
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  disallowEmptySelection
+                  aria-label="Table Columns"
+                  closeOnSelect={false}
+                  selectedKeys={statusFilter}
+                  selectionMode="multiple"
+                  onSelectionChange={(keys) =>
+                    setStatusFilter(keys as Set<string>)
+                  }
                 >
-                  Status
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                disallowEmptySelection
-                aria-label="Table Columns"
-                closeOnSelect={false}
-                selectedKeys={statusFilter}
-                selectionMode="multiple"
-                onSelectionChange={setStatusFilter}
-              >
-                {statusOptions.map((status) => (
-                  <DropdownItem key={status.uid} className="capitalize">
-                    {capitalize(status.name)}
+                  {statusOptions.map((status) => (
+                    <DropdownItem key={status.uid} className="capitalize">
+                      {capitalize(status.name)}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button endContent={<ChevronDownIcon />} variant="bordered">
+                    Export
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu variant="faded">
+                  <DropdownItem
+                    description="Ekspor jadwal ke file CSV"
+                    key="csv"
+                  >
+                    <CSVLink data={csvData} filename={exportFileName}>
+                      Export to CSV
+                    </CSVLink>
                   </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-            <Button color="secondary" onPress={exportToPDF}>
-              Export to PDF
-            </Button>
-            <CSVLink data={csvData} filename={exportFileName}>
-              <Button color="primary">Export to CSV</Button>
-            </CSVLink>
+                  <DropdownItem
+                    key="pdf"
+                    description="Ekspor jadwal ke file PDF"
+                    onPress={exportToPDF}
+                  >
+                    Export to PDF
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </div>
           </div>
         </div>
         <div className="flex items-center justify-between">
@@ -241,7 +267,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
           <label className="flex items-center text-small text-default-400">
             Rows per page:
             <select
-              className="bg-transparent text-small text-default-400 outline-none"
+              className="ml-2 bg-transparent text-small text-default-400 outline-none"
               onChange={onRowsPerPageChange}
             >
               <option value="5">5</option>
@@ -269,11 +295,6 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const bottomContent = useMemo(
     () => (
       <div className="flex items-center justify-between px-2 py-2">
-        <span className="w-[30%] text-small text-default-400">
-          {selectedKeys === "all"
-            ? "All items selected"
-            : `${selectedKeys.size} of ${filteredItems.length} selected`}
-        </span>
         <Pagination
           isCompact
           showControls
@@ -283,7 +304,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
           total={pages}
           onChange={setPage}
         />
-        <div className="hidden w-[30%] justify-end gap-2 sm:flex">
+        <div className="hidden gap-2 sm:flex">
           <Button
             isDisabled={pages === 1}
             size="sm"
@@ -303,54 +324,50 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
         </div>
       </div>
     ),
-    [
-      selectedKeys,
-      filteredItems.length,
-      page,
-      pages,
-      onPreviousPage,
-      onNextPage,
-    ],
+    [page, pages, onPreviousPage, onNextPage],
   );
 
   return (
-    <Table
-      isHeaderSticky
-      bottomContent={bottomContent}
-      bottomContentPlacement="outside"
-      classNames={{
-        wrapper: "max-h-[382px]",
-      }}
-      selectedKeys={selectedKeys}
-      selectionMode="multiple"
-      sortDescriptor={sortDescriptor}
-      topContent={topContent}
-      topContentPlacement="outside"
-      onSelectionChange={setSelectedKeys}
-      onSortChange={setSortDescriptor}
-    >
-      <TableHeader columns={columns}>
-        {(column) => (
-          <TableColumn
-            key={column.uid}
-            align={column.uid === "actions" ? "center" : "start"}
-            allowsSorting={column.sortable}
-          >
-            {column.name}
-          </TableColumn>
-        )}
-      </TableHeader>
-      <TableBody emptyContent={"Not found"} items={sortedItems}>
-        {(item) => (
-          <TableRow key={item.npm}>
-            {(columnKey) => (
-              <TableCell>
-                {renderCell(item, columnKey as keyof MahasiswaItem)}
-              </TableCell>
+    <Card>
+      <CardBody>
+        <Table
+          shadow="none"
+          aria-label="Mahasiswa Table"
+          isHeaderSticky
+          bottomContent={bottomContent}
+          bottomContentPlacement="outside"
+          classNames={{
+            wrapper: "max-h-[382px]",
+          }}
+          sortDescriptor={sortDescriptor}
+          topContent={topContent}
+          topContentPlacement="outside"
+          onSortChange={setSortDescriptor}
+        >
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn
+                key={column.uid}
+                align={column.uid === "actions" ? "center" : "start"}
+                allowsSorting={column.sortable}
+              >
+                {column.name}
+              </TableColumn>
             )}
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+          </TableHeader>
+          <TableBody emptyContent={"Not found"} items={sortedItems}>
+            {(item) => (
+              <TableRow key={item.npm}>
+                {(columnKey) => (
+                  <TableCell>
+                    {renderCell(item, columnKey as keyof MahasiswaItem)}
+                  </TableCell>
+                )}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardBody>
+    </Card>
   );
 }

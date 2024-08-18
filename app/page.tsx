@@ -116,40 +116,46 @@ export default function Home() {
         cari jadwal dan daftar mahasiswa baru
       </p>
       <form onSubmit={handleSubmit} className="mb-4">
-        <div className="flex flex-col gap-4">
-          <Input
-            className="font-semibold"
-            labelPlacement="outside"
-            type="text"
-            label="Masukkan Kelas"
-            placeholder="Contoh: 2ia14"
-            value={kelas}
-            onChange={handleKelasChange}
-          />
-          <CheckboxGroup
-            orientation="horizontal"
-            label="Pilih opsi yang ingin ditampilkan"
-            value={selectedOptions}
-            onValueChange={setSelectedOptions}
-          >
-            <Checkbox value="jadwal">Jadwal Kelas</Checkbox>
-            <Checkbox
-              value="kelasBaru"
-              isDisabled={selectedOptions.includes("mahasiswaBaru")}
+        <Card className="p-6">
+          <div className="flex flex-col gap-4">
+            <Input
+              variant="faded"
+              className="font-semibold"
+              labelPlacement="outside"
+              type="text"
+              label="Masukkan Kelas"
+              placeholder="Contoh: 2ia14"
+              value={kelas}
+              onChange={handleKelasChange}
+            />
+            <CheckboxGroup
+              orientation="horizontal"
+              label="Pilih opsi yang ingin ditampilkan"
+              value={selectedOptions}
+              onValueChange={setSelectedOptions}
             >
-              Kelas Baru
-            </Checkbox>
-            <Checkbox
-              value="mahasiswaBaru"
-              isDisabled={selectedOptions.includes("kelasBaru")}
+              <Checkbox value="jadwal">Jadwal Kelas</Checkbox>
+              <Checkbox
+                value="kelasBaru"
+                isDisabled={selectedOptions.includes("mahasiswaBaru")}
+              >
+                Kelas Baru
+              </Checkbox>
+              <Checkbox
+                value="mahasiswaBaru"
+                isDisabled={selectedOptions.includes("kelasBaru")}
+              >
+                Mahasiswa Baru
+              </Checkbox>
+            </CheckboxGroup>
+            <Button
+              type="submit"
+              className="bg-black text-white dark:bg-white dark:text-black"
             >
-              Mahasiswa Baru
-            </Checkbox>
-          </CheckboxGroup>
-          <Button type="submit" color="primary">
-            Tampilkan Data
-          </Button>
-        </div>
+              Tampilkan Data
+            </Button>
+          </div>
+        </Card>
       </form>
 
       {showKelasData && (
