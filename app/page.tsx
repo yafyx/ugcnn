@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Card, CardBody } from "@nextui-org/card";
 import {
   Button,
@@ -58,6 +58,10 @@ export default function Home() {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [showKelasData, setShowKelasData] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const selectedOptionsCount = useMemo(
+    () => selectedOptions.length,
+    [selectedOptions],
+  );
 
   const { data: eventsData, error: eventsError } = useSWR<ApiResponse>(
     "https://baak-api.vercel.app/kalender",
@@ -96,7 +100,6 @@ export default function Home() {
     e.preventDefault();
     setIsLoading(true);
     setShowKelasData(true);
-    // Simulasi delay untuk menunjukkan loading
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsLoading(false);
   }, []);
@@ -159,7 +162,9 @@ export default function Home() {
       {showKelasData && (
         <div className="mb-4 flex flex-col gap-4 md:flex-row">
           {selectedOptions.includes("jadwal") && (
-            <div className="w-full md:w-1/2">
+            <div
+              className={`w-full ${selectedOptionsCount > 1 ? "md:w-1/2" : ""} transition-all duration-300`}
+            >
               {jadwalError ? (
                 <Card>
                   <CardBody>
@@ -179,7 +184,9 @@ export default function Home() {
           )}
 
           {selectedOptions.includes("kelasBaru") && (
-            <div className="w-full md:w-1/2">
+            <div
+              className={`w-full ${selectedOptionsCount > 1 ? "md:w-1/2" : ""} transition-all duration-300`}
+            >
               {kelasBaruError ? (
                 <Card>
                   <CardBody>
@@ -201,7 +208,9 @@ export default function Home() {
           )}
 
           {selectedOptions.includes("mahasiswaBaru") && (
-            <div className="w-full md:w-1/2">
+            <div
+              className={`w-full ${selectedOptionsCount > 1 ? "md:w-1/2" : ""} transition-all duration-300`}
+            >
               {mahasiswaBaruError ? (
                 <Card>
                   <CardBody>
