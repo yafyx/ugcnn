@@ -232,6 +232,9 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
                     </DropdownItem>
                   ))}
                 </DropdownMenu>
+                <CSVLink data={csvData} filename={exportFileName}>
+                  <Button variant="bordered">Export to CSV</Button>
+                </CSVLink>
               </Dropdown>
               <Dropdown>
                 <DropdownTrigger>

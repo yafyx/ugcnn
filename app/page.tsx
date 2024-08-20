@@ -21,7 +21,7 @@ interface Event {
   end: string;
 }
 
-interface ApiResponse {
+interface Kalender {
   status: string;
   data: Event[];
 }
@@ -63,7 +63,7 @@ export default function Home() {
     [selectedOptions],
   );
 
-  const { data: eventsData, error: eventsError } = useSWR<ApiResponse>(
+  const { data: eventsData, error: eventsError } = useSWR<Kalender>(
     "https://baak-api.vercel.app/kalender",
     fetcher,
   );

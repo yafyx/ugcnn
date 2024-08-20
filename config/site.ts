@@ -5,9 +5,10 @@ export const siteConfig = {
   description: "",
   navItems: [
     {
-      label: "Home",
-      href: "/",
+      label: "Timeline",
+      href: "/timeline",
     },
+
   ],
   navMenuItems: [
 

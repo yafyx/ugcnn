@@ -12,7 +12,6 @@ import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
-  DropdownSection,
   DropdownItem,
 } from "@nextui-org/dropdown";
 import { Button } from "@nextui-org/react";
@@ -42,6 +41,24 @@ interface JadwalTableProps {
   jadwal: JadwalHari;
   kelas: string;
 }
+
+const CSVExport = ({
+  data,
+  filename,
+  children,
+}: {
+  data: any[];
+  filename: string;
+  children: React.ReactNode;
+}) => (
+  <CSVLink
+    data={data}
+    filename={filename}
+    style={{ textDecoration: "none", color: "inherit" }}
+  >
+    {children}
+  </CSVLink>
+);
 
 const JadwalTable: React.FC<JadwalTableProps> = ({ jadwal, kelas }) => {
   const columns = ["Hari", "Mata Kuliah", "Jam", "Ruang", "Dosen"];
@@ -88,13 +105,13 @@ const JadwalTable: React.FC<JadwalTableProps> = ({ jadwal, kelas }) => {
               </Button>
             </DropdownTrigger>
             <DropdownMenu variant="faded">
-              <DropdownItem description="Ekspor jadwal ke file CSV" key="csv">
-                <CSVLink data={csvData} filename={`${exportFileName}.csv`}>
+              <DropdownItem key="csv" description="Ekspor jadwal ke file CSV">
+                <CSVExport data={csvData} filename={`${exportFileName}.csv`}>
                   Export to CSV
-                </CSVLink>
+                </CSVExport>
               </DropdownItem>
               <DropdownItem
-                key="csv"
+                key="pdf"
                 description="Ekspor jadwal ke file PDF"
                 onPress={exportToPDF}
               >
