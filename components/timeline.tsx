@@ -309,7 +309,12 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
         </CardBody>
       </Card>
 
-      <Modal hideCloseButton={true} isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Modal
+        placement="center"
+        hideCloseButton={true}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+      >
         <ModalContent>
           {(onClose) => (
             <>

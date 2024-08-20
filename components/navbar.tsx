@@ -5,6 +5,7 @@ import {
   NavbarMenuToggle,
   NavbarBrand,
   NavbarItem,
+  NavbarMenuItem,
 } from "@nextui-org/navbar";
 import { Button } from "@nextui-org/button";
 import { Link } from "@nextui-org/link";
@@ -78,7 +79,30 @@ export const Navbar = () => {
         <NavbarMenuToggle />
       </NavbarContent>
 
-      <NavbarMenu></NavbarMenu>
+      <NavbarMenu>
+        {siteConfig.navItems.map((item, index) => (
+          <NavbarMenuItem key={item.href}>
+            <Link
+              color="foreground"
+              className="w-full"
+              href={item.href}
+              size="lg"
+            >
+              {item.label}
+            </Link>
+          </NavbarMenuItem>
+        ))}
+        <Button
+          isExternal
+          as={Link}
+          className="mt-3 bg-default-100 text-sm font-normal text-default-600"
+          href={siteConfig.links.sponsor}
+          startContent={<HeartFilledIcon className="text-danger" />}
+          variant="flat"
+        >
+          Sponsor
+        </Button>
+      </NavbarMenu>
     </NextUINavbar>
   );
 };
