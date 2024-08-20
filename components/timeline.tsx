@@ -229,7 +229,9 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                 ref={timelineRef}
               >
                 <div className="relative flex h-auto min-w-max flex-col py-4">
-                  <div className="pointer-events-none absolute bottom-0 left-[-20] right-0 top-28 bg-opacity-50 bg-[repeating-linear-gradient(to_right,transparent,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px)] bg-[length:40px_100%] bg-repeat-x"></div>
+                  <div className="pointer-events-none absolute bottom-0 left-[-20px] right-0 top-28">
+                    <div className="h-full w-full bg-[linear-gradient(to_right,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px,transparent_40px)] bg-[length:40px_100%] bg-repeat-x opacity-50"></div>
+                  </div>
                   <div className="flex items-center p-2 dark:text-white">
                     {Object.keys(months).map((monthKey) => (
                       <div
