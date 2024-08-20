@@ -123,11 +123,21 @@ export default function Home() {
               className="font-semibold"
               labelPlacement="outside"
               type="text"
-              label="Masukkan Kelas"
-              placeholder="Contoh: 2ia14"
+              label="Masukkan yang ingin dicari"
+              placeholder="Contoh: 2IA14"
               value={kelas}
               onChange={handleKelasChange}
             />
+            <hr
+              className="h-divider w-full shrink-0 border-none bg-divider"
+              role="separator"
+            ></hr>
+            <div className="flex h-auto w-full items-center">
+              <small className="text-default-500">
+                Tip: Kamu juga bisa mencari berdasarkan nama dan npm untuk
+                mahasiswa dan dosen untuk jadwal
+              </small>
+            </div>
             <CheckboxGroup
               orientation="horizontal"
               label="Pilih opsi yang ingin ditampilkan"
