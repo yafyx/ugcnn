@@ -92,8 +92,8 @@ const JadwalTable: React.FC<JadwalTableProps> = ({ jadwal, kelas }) => {
 
   return (
     <Card className="mb-4">
-      <CardHeader className="flex items-center justify-between p-4">
-        <h2 className="text-lg font-semibold">
+      <CardHeader className="flex items-center justify-between bg-white/60 p-4 dark:bg-zinc-800/50">
+        <h2 className="text-xl font-semibold">
           Jadwal Kelas
           <span className="uppercase"> {kelas}</span>
         </h2>
@@ -121,41 +121,61 @@ const JadwalTable: React.FC<JadwalTableProps> = ({ jadwal, kelas }) => {
           </Dropdown>
         </div>
       </CardHeader>
-      <CardBody>
-        <Table shadow="none" aria-label="Jadwal Kelas">
-          <TableHeader>
-            <TableColumn>Hari</TableColumn>
-            <TableColumn>Mata Kuliah</TableColumn>
-            <TableColumn>Jam</TableColumn>
-            <TableColumn>Ruang</TableColumn>
-            <TableColumn>Dosen</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {Object.entries(jadwal).flatMap(([hari, matkul]) =>
-              matkul && matkul.length > 0 ? (
-                matkul.map((m, index) => (
-                  <TableRow key={`${hari}-${index}`}>
-                    <TableCell className="capitalize">
-                      {index === 0 ? hari : ""}
-                    </TableCell>
-                    <TableCell>{m.nama}</TableCell>
-                    <TableCell>{m.jam}</TableCell>
-                    <TableCell>{m.ruang}</TableCell>
-                    <TableCell>{m.dosen}</TableCell>
+      <CardBody className="px-2 sm:px-4">
+        <div className="overflow-x-auto">
+          <Table
+            shadow="none"
+            aria-label="Jadwal Kelas"
+            classNames={{
+              wrapper: "min-w-full",
+              th: "text-xs sm:text-sm whitespace-nowrap",
+              td: "text-xs sm:text-sm whitespace-nowrap",
+            }}
+          >
+            <TableHeader>
+              <TableColumn className="w-1/6">Hari</TableColumn>
+              <TableColumn className="w-1/4">Mata Kuliah</TableColumn>
+              <TableColumn className="w-1/6">Jam</TableColumn>
+              <TableColumn className="w-1/6">Ruang</TableColumn>
+              <TableColumn className="w-1/4">Dosen</TableColumn>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(jadwal).flatMap(([hari, matkul]) =>
+                matkul && matkul.length > 0 ? (
+                  matkul.map((m, index) => (
+                    <TableRow
+                      key={`${hari}-${index}`}
+                      className={
+                        index === matkul.length - 1
+                          ? "border-b-slate border-b dark:border-b-zinc-800"
+                          : ""
+                      }
+                    >
+                      <TableCell className="capitalize">
+                        {index === 0 ? hari : ""}
+                      </TableCell>
+                      <TableCell>{m.nama}</TableCell>
+                      <TableCell>{m.jam}</TableCell>
+                      <TableCell>{m.ruang}</TableCell>
+                      <TableCell>{m.dosen}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow
+                    key={hari}
+                    className="border-b-slate border-b dark:border-b-zinc-800"
+                  >
+                    <TableCell className="capitalize">{hari}</TableCell>
+                    <TableCell>Tidak ada jadwal</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>-</TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow key={hari}>
-                  <TableCell className="capitalize">{hari}</TableCell>
-                  <TableCell>Tidak ada jadwal</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                </TableRow>
-              ),
-            )}
-          </TableBody>
-        </Table>
+                ),
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardBody>
     </Card>
   );

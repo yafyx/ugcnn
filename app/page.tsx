@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useCallback, useMemo } from "react";
-import { Card, CardBody } from "@nextui-org/card";
+import { Card, CardBody, CardHeader } from "@nextui-org/card";
 import {
   Button,
   Input,
@@ -170,7 +170,7 @@ export default function Home() {
       </form>
 
       {showKelasData && (
-        <div className="mb-4 flex flex-col gap-4 md:flex-row">
+        <div className="flex flex-col gap-x-4 md:flex-row">
           {selectedOptions.includes("jadwal") && (
             <div
               className={`w-full ${selectedOptionsCount > 1 ? "md:w-1/2" : ""} transition-all duration-300`}
@@ -246,20 +246,28 @@ export default function Home() {
         </div>
       )}
 
-      <div className="flex items-center justify-between p-4 dark:text-white">
-        <h2 className="text-2xl font-bold">Timeline Kalender Akademik</h2>
-      </div>
-      {isTimelineLoading ? (
-        <Card>
-          <CardBody>
-            <Skeleton className="rounded-lg">
-              <div className="h-64 rounded-lg bg-default-300"></div>
-            </Skeleton>
-          </CardBody>
-        </Card>
-      ) : (
-        eventsData && <Timeline events={eventsData.data} />
-      )}
+      <Card className="mt-4">
+        <CardHeader className="bg-white/60 dark:bg-zinc-800/50">
+          <div className="flex items-center justify-between p-4 dark:text-white">
+            <h2 className="text-xl font-semibold">
+              Timeline Kalender Akademik
+            </h2>
+          </div>
+        </CardHeader>
+        <CardBody>
+          {isTimelineLoading ? (
+            <Card>
+              <CardBody>
+                <Skeleton className="rounded-lg">
+                  <div className="h-64 rounded-lg bg-default-300"></div>
+                </Skeleton>
+              </CardBody>
+            </Card>
+          ) : (
+            eventsData && <Timeline events={eventsData.data} />
+          )}
+        </CardBody>
+      </Card>
     </div>
   );
 }

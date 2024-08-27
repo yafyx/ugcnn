@@ -67,17 +67,17 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
   const columns = useMemo(() => {
     return type === "mahasiswaBaru"
       ? [
-          { name: "NO PEND", uid: "no_pend", sortable: true },
-          { name: "NAMA", uid: "nama", sortable: true },
+          { name: "No. Pend", uid: "no_pend", sortable: true },
+          { name: "Nama", uid: "nama", sortable: true },
           { name: "NPM", uid: "npm", sortable: true },
-          { name: "KELAS", uid: "kelas", sortable: true },
-          { name: "KETERANGAN", uid: "keterangan", sortable: true },
+          { name: "Kelas", uid: "kelas", sortable: true },
+          { name: "Keterangan", uid: "keterangan", sortable: true },
         ]
       : [
           { name: "NPM", uid: "npm", sortable: true },
-          { name: "NAMA", uid: "nama", sortable: true },
-          { name: "KELAS LAMA", uid: "kelas_lama", sortable: true },
-          { name: "KELAS BARU", uid: "kelas_baru", sortable: true },
+          { name: "Nama", uid: "nama", sortable: true },
+          { name: "Kelas Lama", uid: "kelas_lama", sortable: true },
+          { name: "Kelas Baru", uid: "kelas_baru", sortable: true },
         ];
   }, [type]);
 
@@ -189,11 +189,10 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
 
   const topContent = useMemo(
     () => (
-      <div className="flex flex-col gap-3">
+      <div className="flex w-full flex-col gap-3">
         <div className="flex flex-col items-start justify-between gap-3 p-1 sm:flex-row sm:items-center">
-          <h2 className="text-lg font-semibold">
-            Daftar Kelas
-            <span className="uppercase"></span>
+          <h2 className="text-xl font-semibold">
+            Daftar {type === "mahasiswaBaru" ? "Mahasiswa Baru" : "Kelas Baru"}
           </h2>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <Input
@@ -211,7 +210,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
                 <DropdownTrigger>
                   <Button
                     endContent={<ChevronDownIcon className="text-small" />}
-                    variant="flat"
+                    variant="bordered"
                   >
                     Filter
                   </Button>
@@ -232,9 +231,6 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
                     </DropdownItem>
                   ))}
                 </DropdownMenu>
-                <CSVLink data={csvData} filename={exportFileName}>
-                  <Button variant="bordered">Export to CSV</Button>
-                </CSVLink>
               </Dropdown>
               <Dropdown>
                 <DropdownTrigger>
@@ -243,17 +239,14 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu variant="faded">
-                  <DropdownItem
-                    description="Ekspor jadwal ke file CSV"
-                    key="csv"
-                  >
+                  <DropdownItem key="csv" description="Ekspor ke file CSV">
                     <CSVLink data={csvData} filename={exportFileName}>
                       Export to CSV
                     </CSVLink>
                   </DropdownItem>
                   <DropdownItem
                     key="pdf"
-                    description="Ekspor jadwal ke file PDF"
+                    description="Ekspor ke file PDF"
                     onPress={exportToPDF}
                   >
                     Export to PDF
@@ -265,7 +258,8 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
         </div>
         <div className="flex items-center justify-between">
           <span className="text-small text-default-400">
-            Total {data.length} users
+            Total {data.length}{" "}
+            {type === "mahasiswaBaru" ? "mahasiswa" : "kelas"}
           </span>
           <label className="flex items-center text-small text-default-400">
             Rows per page:
@@ -292,6 +286,7 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
       csvData,
       exportFileName,
       exportToPDF,
+      type,
     ],
   );
 
@@ -332,44 +327,49 @@ export default function MahasiswaTable({ data, type }: MahasiswaTableProps) {
 
   return (
     <Card>
-      <CardBody>
-        <Table
-          shadow="none"
-          aria-label="Mahasiswa Table"
-          isHeaderSticky
-          bottomContent={bottomContent}
-          bottomContentPlacement="outside"
-          classNames={{
-            wrapper: "max-h-[382px]",
-          }}
-          sortDescriptor={sortDescriptor}
-          topContent={topContent}
-          topContentPlacement="outside"
-          onSortChange={setSortDescriptor}
-        >
-          <TableHeader columns={columns}>
-            {(column) => (
-              <TableColumn
-                key={column.uid}
-                align={column.uid === "actions" ? "center" : "start"}
-                allowsSorting={column.sortable}
-              >
-                {column.name}
-              </TableColumn>
-            )}
-          </TableHeader>
-          <TableBody emptyContent={"Not found"} items={sortedItems}>
-            {(item) => (
-              <TableRow key={item.npm}>
-                {(columnKey) => (
-                  <TableCell>
-                    {renderCell(item, columnKey as keyof MahasiswaItem)}
-                  </TableCell>
-                )}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <CardHeader className="bg-white/50 dark:bg-zinc-800/50">
+        {topContent}
+      </CardHeader>
+      <CardBody className="px-2 sm:px-4">
+        <div className="overflow-x-auto">
+          <Table
+            shadow="none"
+            aria-label="Mahasiswa Table"
+            isHeaderSticky
+            bottomContent={bottomContent}
+            bottomContentPlacement="outside"
+            classNames={{
+              wrapper: "min-w-full",
+              th: "text-xs sm:text-sm whitespace-nowrap",
+              td: "text-xs sm:text-sm whitespace-nowrap",
+            }}
+            sortDescriptor={sortDescriptor}
+            onSortChange={setSortDescriptor}
+          >
+            <TableHeader columns={columns}>
+              {(column) => (
+                <TableColumn
+                  key={column.uid}
+                  align={column.uid === "actions" ? "center" : "start"}
+                  allowsSorting={column.sortable}
+                >
+                  {column.name}
+                </TableColumn>
+              )}
+            </TableHeader>
+            <TableBody emptyContent={"Not found"} items={sortedItems}>
+              {(item) => (
+                <TableRow key={item.npm}>
+                  {(columnKey) => (
+                    <TableCell>
+                      {renderCell(item, columnKey as keyof MahasiswaItem)}
+                    </TableCell>
+                  )}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardBody>
     </Card>
   );
