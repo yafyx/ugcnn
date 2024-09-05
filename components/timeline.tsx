@@ -23,6 +23,7 @@ import {
   isAfter,
   isSameDay,
   differenceInSeconds,
+  getYear,
 } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -57,7 +58,7 @@ const gradients = [
   "bg-gradient-to-b from-rose-800 to-rose-900",
 ];
 
-const parseDate = (dateString: string) => {
+const parseDate = (dateString: string, endDateString?: string) => {
   const [day, month, year] = dateString.split(" ");
   const monthMap: { [key: string]: string } = {
     Januari: "01",
@@ -73,7 +74,14 @@ const parseDate = (dateString: string) => {
     November: "11",
     Desember: "12",
   };
-  return parseISO(`${year}-${monthMap[month]}-${day.padStart(2, "0")}`);
+
+  let parsedYear = year;
+  if (!year && endDateString) {
+    const endYear = endDateString.split(" ")[2];
+    parsedYear = endYear;
+  }
+
+  return parseISO(`${parsedYear}-${monthMap[month]}-${day.padStart(2, "0")}`);
 };
 
 const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
@@ -124,7 +132,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
   const adjustedEvents = events.map((event) => {
-    const start = parseDate(event.start);
+    const start = parseDate(event.start, event.end);
     const end = parseDate(event.end);
     if (isSameDay(start, end)) {
       return {
@@ -132,7 +140,11 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
         start: format(subDays(end, 7), "d MMMM yyyy", { locale: id }),
       };
     }
-    return event;
+    return {
+      ...event,
+      start: format(start, "d MMMM yyyy", { locale: id }),
+      end: format(end, "d MMMM yyyy", { locale: id }),
+    };
   });
 
   const earliestStart = adjustedEvents.reduce((earliest, event) => {
@@ -192,7 +204,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   const calculateEventPositions = (events: Event[]) => {
     const lanes: { start: Date; end: Date }[] = [];
     return events.map((event) => {
-      const start = parseDate(event.start);
+      const start = parseDate(event.start, event.end);
       const end = parseDate(event.end);
       let laneIndex = lanes.findIndex(
         (lane) =>
