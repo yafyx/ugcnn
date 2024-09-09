@@ -9,11 +9,12 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
-  ScrollShadow,
+  Tooltip,
 } from "@nextui-org/react";
 import {
   parseISO,
   differenceInDays,
+  differenceInSeconds,
   addDays,
   subDays,
   format,
@@ -22,8 +23,6 @@ import {
   isBefore,
   isAfter,
   isSameDay,
-  differenceInSeconds,
-  getYear,
 } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -90,6 +89,12 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEventStatus, setSelectedEventStatus] = useState<{
+    short: string;
+    full: string;
+    position: string;
+    secondsLeft: number;
+  } | null>(null);
   const [containerHeight, setContainerHeight] = useState(0);
 
   useEffect(() => {
@@ -141,9 +146,68 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
     }
   }, [events]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+      if (selectedEvent) {
+        setSelectedEventStatus(getEventStatus(selectedEvent));
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [selectedEvent]);
+
+  useEffect(() => {
+    if (selectedEvent) {
+      setSelectedEventStatus(getEventStatus(selectedEvent));
+    }
+  }, [currentTime, selectedEvent]);
+
+  const getEventStatus = (event: Event) => {
+    const start = parseDate(event.start);
+    const end = parseDate(event.end);
+    const now = new Date();
+
+    if (isBefore(now, start)) {
+      const daysUntilStart = differenceInDays(start, now);
+      const secondsLeft = differenceInSeconds(start, now);
+      return {
+        short: `${daysUntilStart}h`,
+        full: `Dimulai dlm ${daysUntilStart} hari`,
+        position: "start",
+        secondsLeft,
+      };
+    } else if (isAfter(now, end)) {
+      return {
+        short: "Selesai",
+        full: "Selesai",
+        position: "end",
+        secondsLeft: 0,
+      };
+    } else {
+      const daysUntilEnd = differenceInDays(end, now);
+      const secondsLeft = differenceInSeconds(end, now);
+      return {
+        short: `${daysUntilEnd}h`,
+        full: `Berakhir dlm ${daysUntilEnd} hari`,
+        position: "end",
+        secondsLeft,
+      };
+    }
+  };
+
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
+    setSelectedEventStatus(getEventStatus(event));
     onOpen();
+  };
+
+  const formatTimeLeft = (seconds: number) => {
+    const hours = Math.floor((seconds % (24 * 3600)) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
@@ -201,22 +265,6 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
     const diffInDays = diffInSeconds / (24 * 60 * 60);
     return diffInDays * 40;
   })();
-
-  const getEventStatus = (event: Event) => {
-    const start = parseDate(event.start);
-    const end = parseDate(event.end);
-    const now = currentTime;
-
-    if (isBefore(now, start)) {
-      const daysUntilStart = differenceInDays(start, now);
-      return `Dimulai dalam ${daysUntilStart} hari`;
-    } else if (isAfter(now, end)) {
-      return "Selesai";
-    } else {
-      const daysUntilEnd = differenceInDays(end, now);
-      return `Berakhir dalam ${daysUntilEnd} hari`;
-    }
-  };
 
   const calculateEventPositions = (events: Event[]) => {
     const lanes: { start: Date; end: Date }[] = [];
@@ -337,16 +385,36 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                         }}
                         onClick={() => handleEventClick(event)}
                       >
-                        <span className="sticky left-0 z-10 flex flex-col truncate px-2 text-sm font-medium text-white drop-shadow-lg sm:text-base">
+                        {status.position === "start" && (
+                          <Tooltip
+                            placement="right"
+                            content={`${status.full} ${formatTimeLeft(status.secondsLeft)}`}
+                          >
+                            <Chip
+                              size="sm"
+                              variant="solid"
+                              className="mr-1 bg-white/10 text-white"
+                            >
+                              {status.short}
+                            </Chip>
+                          </Tooltip>
+                        )}
+                        <span className="sticky left-0 z-10 flex flex-col truncate text-ellipsis text-sm font-medium text-white drop-shadow-lg sm:text-base">
                           {event.kegiatan}
                         </span>
-                        <Chip
-                          size="sm"
-                          variant="solid"
-                          className="bg-white/10 text-white"
-                        >
-                          {status}
-                        </Chip>
+                        {status.position === "end" && (
+                          <Tooltip
+                            content={`${status.full} ${formatTimeLeft(status.secondsLeft)}`}
+                          >
+                            <Chip
+                              size="sm"
+                              variant="solid"
+                              className="ml-2 bg-white/10 text-white"
+                            >
+                              {status.short}
+                            </Chip>
+                          </Tooltip>
+                        )}
                       </div>
                     );
                   })}
@@ -414,7 +482,8 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                   variant="solid"
                   className="bg-black text-white dark:bg-white dark:text-black"
                 >
-                  {selectedEvent && getEventStatus(selectedEvent)}
+                  {selectedEventStatus &&
+                    `${selectedEventStatus.full} ${formatTimeLeft(selectedEventStatus.secondsLeft)}`}
                 </Chip>
               </ModalFooter>
             </>
