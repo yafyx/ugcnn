@@ -246,7 +246,7 @@ export default function Home() {
         </div>
       )}
 
-      <Card className="mt-4">
+      <Card className="mt-4 h-[422px]">
         <CardHeader className="bg-white/60 dark:bg-zinc-800/50">
           <div className="flex items-center justify-between p-4 dark:text-white">
             <h2 className="text-xl font-semibold">
@@ -256,13 +256,9 @@ export default function Home() {
         </CardHeader>
         <CardBody>
           {isTimelineLoading ? (
-            <Card>
-              <CardBody>
-                <Skeleton className="rounded-lg">
-                  <div className="h-64 rounded-lg bg-default-300"></div>
-                </Skeleton>
-              </CardBody>
-            </Card>
+            <Skeleton className="rounded-lg">
+              <div className="h-64 rounded-lg bg-default-300"></div>
+            </Skeleton>
           ) : (
             eventsData && <Timeline events={eventsData.data} />
           )}

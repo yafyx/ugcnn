@@ -252,8 +252,9 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   const eventAreaHeight = containerHeight - headerHeight;
   const maxLanes = Math.floor(eventAreaHeight / laneHeight);
   const visibleLanes = Math.min(maxLanes, maxLaneIndex + 1);
+
   return (
-    <div className="rounded-lg" style={{ height: `${containerHeight}px` }}>
+    <div className="" style={{ height: `${containerHeight}px` }}>
       <Card className="overflow-hidden">
         <CardBody className="p-0">
           <div
