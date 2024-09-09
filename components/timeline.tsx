@@ -370,6 +370,24 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
         hideCloseButton={true}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
+        motionProps={{
+          variants: {
+            enter: {
+              y: 0,
+              opacity: 1,
+              transition: {
+                duration: 0.1,
+              },
+            },
+            exit: {
+              y: 5,
+              opacity: 0,
+              transition: {
+                duration: 0.1,
+              },
+            },
+          },
+        }}
       >
         <ModalContent>
           {(onClose) => (
