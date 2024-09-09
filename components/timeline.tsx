@@ -90,6 +90,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [containerHeight, setContainerHeight] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -97,6 +98,22 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (timelineRef.current) {
+        const windowHeight = window.innerHeight;
+        const timelineTop = timelineRef.current.getBoundingClientRect().top;
+        const newHeight = windowHeight - timelineTop - 20;
+        setContainerHeight(newHeight);
+      }
+    };
+
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+
+    return () => window.removeEventListener("resize", updateHeight);
   }, []);
 
   useEffect(() => {
@@ -229,16 +246,21 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
   };
 
   const eventPositions = calculateEventPositions(adjustedEvents);
-
+  const maxLaneIndex = Math.max(...eventPositions.map((e) => e.laneIndex));
+  const laneHeight = 36;
+  const headerHeight = 80;
+  const eventAreaHeight = containerHeight - headerHeight;
+  const maxLanes = Math.floor(eventAreaHeight / laneHeight);
+  const visibleLanes = Math.min(maxLanes, maxLaneIndex + 1);
   return (
-    <div className="overflow-hidden rounded-lg">
+    <div className="rounded-lg" style={{ height: `${containerHeight}px` }}>
       <Card className="overflow-hidden">
         <CardBody className="p-0">
-          <div className="overflow-x-auto" ref={scrollContainerRef}>
-            <div
-              className="relative flex h-[260px] min-w-max flex-col"
-              ref={timelineRef}
-            >
+          <div
+            className="overflow-x-auto overflow-y-hidden"
+            ref={scrollContainerRef}
+          >
+            <div className="relative flex min-w-max flex-col" ref={timelineRef}>
               <div className="relative flex min-w-max flex-col">
                 <div className="pointer-events-none absolute bottom-0 left-[-20px] right-0 top-28">
                   <div className="h-full w-full bg-[linear-gradient(to_right,transparent_39px,#a1a1aa1a_39px,#a1a1aa1a_40px,transparent_40px)] bg-[length:40px_100%] bg-repeat-x opacity-50"></div>
@@ -289,9 +311,9 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                   ))}
                 </div>
                 <div
-                  className="relative mt-2 dark:text-white"
+                  className="relative mt-2 flex-grow dark:text-white"
                   style={{
-                    height: `${(Math.max(...eventPositions.map((e) => e.laneIndex)) + 1) * 32}px`,
+                    height: `${visibleLanes * laneHeight}px`,
                   }}
                 >
                   {eventPositions.map((event, index) => {
@@ -301,6 +323,8 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                     const left = differenceInDays(start, displayStartDate) * 40;
                     const status = getEventStatus(event);
 
+                    if (event.laneIndex >= visibleLanes) return null;
+
                     return (
                       <div
                         key={index}
@@ -308,7 +332,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                         style={{
                           width: `${width}px`,
                           left: `${left}px`,
-                          top: `${event.laneIndex * 36}px`,
+                          top: `${event.laneIndex * laneHeight}px`,
                         }}
                         onClick={() => handleEventClick(event)}
                       >
@@ -326,7 +350,7 @@ const Timeline: React.FC<{ events: Event[] }> = ({ events }) => {
                     );
                   })}
                   <div
-                    className="absolute bottom-[-15px] top-[-40px] z-20 w-[2px] cursor-default bg-black transition-opacity hover:opacity-10 dark:bg-white"
+                    className="absolute bottom-0 top-[-40px] z-20 w-[2px] cursor-default bg-black transition-opacity hover:opacity-10 dark:bg-white"
                     style={{ left: `${currentTimePosition}px` }}
                   >
                     <div className="absolute left-[-30px] top-[-20px] rounded-full bg-black px-2 py-1 text-xs text-white dark:bg-white dark:text-black">

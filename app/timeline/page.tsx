@@ -37,7 +37,7 @@ export default function TimelinePage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="mx-auto p-4">
       <div className="col-span-full mb-6 flex flex-col">
         <h1 className="text-xl font-bold tracking-tight lg:text-2xl xl:text-3xl">
           Timeline Kalender Akademik

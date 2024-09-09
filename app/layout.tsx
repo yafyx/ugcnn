@@ -37,17 +37,17 @@ export default function RootLayout({
       <head />
       <body
         className={clsx(
-          "bg-gradient-to-br from-[#f0f0f0] to-[#e0e0e0] dark:from-[#000000] dark:to-[#000000] font-sans antialiased",
-          fontSans.variable
+          "bg-gradient-to-br from-[#f0f0f0] to-[#e0e0e0] font-sans antialiased dark:from-[#000000] dark:to-[#000000]",
+          fontSans.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="relative flex flex-col">
             <Navbar />
-            <main className="container mx-auto max-w-full pt-16 sm:px-4 flex-grow">
+            <main className="mx-auto min-h-screen max-w-full flex-grow pt-16 sm:px-4">
               {children}
             </main>
-            <footer className="w-full flex items-center justify-center py-3"></footer>
+            <footer className="flex w-full items-center justify-center py-3"></footer>
           </div>
         </Providers>
       </body>
